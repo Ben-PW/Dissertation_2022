@@ -37,7 +37,7 @@ covariate_grid <- covariate_grid %>%
 # regression equation
 
 
-# Define new variable 'output' as a list. This is to allow the loop to store multiple outputs rather
+# Define new variable 'output' as a list. This is to allow the loop to store multiple outputs 
 # instead of just overwriting them
 output <- list()
 
@@ -51,9 +51,9 @@ for(i in 1:nrow(covariate_grid)) {
   
   # each row of covariate_grid is now used as a formula for the regression
   output[[i]] <- lm(data = redcard,
-                    formula = paste('redCards ~',
+                    formula = paste('redCards ~ avrate +',
                                     covariate_grid[i, 'formula']))
-  R2s <- summary(output[[i]])$r.squared
+  R2s[i] <- summary(output[[i]])$r.squared
 }
 
 output_table <- data.frame(covariates = covariate_grid,
@@ -86,16 +86,16 @@ plotfinal <- ggplot(data = plot2,
   labs(x = '')
 
 # Creating dashboard to go underneath plot
-plotfinal2 <- plot2 %>% 
+dashboard <- plot2 %>% 
   gather(Bigdecision, Decision, -R2, -n) %>%
   filter(Decision != 'NA')
 
 # Creating levels in Bigdecision variable that correspond to data in covariate_grid rows
-plotfinal2$Bigdecision <- factor(plotfinal2$Bigdecision, 
+dashboard$Bigdecision <- factor(dashboard$Bigdecision, 
                                  levels = names(covariate_grid))
 
 
-dashboard <- ggplot(data = plotfinal2,
+dashboardfinal <- ggplot(data = plotfinal2,
                     aes(x = n, y = Decision, colour = Bigdecision)) +
   facet_grid(Bigdecision ~ ., scales = "free", space = "free", drop = ) +
   geom_point(aes(colour = Bigdecision), shape = 108, size = 7) +
@@ -107,4 +107,4 @@ dashboard <- ggplot(data = plotfinal2,
         strip.background = element_blank())
 
 library(patchwork)
-plotfinal / dashboard
+plotfinal / dashboardfinal
