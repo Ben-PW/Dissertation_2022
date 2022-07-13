@@ -26,6 +26,7 @@ library(tidyverse)
 ###### Making a grid combining the NA and other values. This then outputs a list
 ###### of every possible combination of the selected covariates
 covariate_grid <- expand.grid(covariates_list) 
+rm(covariates_list)
 
 # First row was two NA values so it was deleted
 covariate_grid <- covariate_grid[-1,]
@@ -56,6 +57,7 @@ for(i in 1:nrow(covariate_grid)) {
   R2s[i] <- summary(output[[i]])$r.squared
 }
 
+
 output_table <- data.frame(covariates = covariate_grid,
                            R2 = R2s)
 
@@ -70,11 +72,15 @@ for (i in 1:nrow(covariate_grid)) {
   R2[i] <- summary(output[[i]])$r.squared
 }
 
+# Remove output variable as it is large and no longer needed
+rm(output)
+
 ######## Creating plot of results
 plot <- cbind(covariate_grid, R2) 
 
 # Order results of plot by R2 value
 plot2 <- plot[order(plot$R2), ]
+rm(plot)
 
 # Creating a grouping variable (n) for each row of covariate_grid
 plot2$n <- 1:nrow(plot2)
@@ -95,7 +101,7 @@ dashboard$Bigdecision <- factor(dashboard$Bigdecision,
                                  levels = names(covariate_grid))
 
 
-dashboardfinal <- ggplot(data = plotfinal2,
+dashboardfinal <- ggplot(data = dashboard,
                     aes(x = n, y = Decision, colour = Bigdecision)) +
   facet_grid(Bigdecision ~ ., scales = "free", space = "free", drop = ) +
   geom_point(aes(colour = Bigdecision), shape = 108, size = 7) +
