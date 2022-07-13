@@ -40,13 +40,13 @@ summary(mod1.1)
 anova(mod1, mod1.1)
 
 # random intercept for players, referees, & league country
-mod1.x <- glmer(redCards ~ 1 + (1 | playerShort) + (1 | refNum)
-                + (1 | leagueCountry),
-                data = redcard,
-                family = binomial(link="logit"),
-                control = glmerControl(optimizer = "bobyqa"),
-                nAGQ = 0)
-summary(mod1.x)
+#mod1.x <- glmer(redCards ~ 1 + (1 | playerShort) + (1 | refNum)
+#                + (1 | leagueCountry),
+#               data = redcard,
+#                family = binomial(link="logit"),
+#                control = glmerControl(optimizer = "bobyqa"),
+#                nAGQ = 0)
+#summary(mod1.x)
 # no additional variance explained by league country
 
 # random intercept for players, referees, & league country
@@ -78,12 +78,11 @@ anova(mod1, mod1.1, mod2, mod2x)
 # fixed effects of player position
 # random effect of player over referee
 mod3 <- glmer(redCards ~ 1 + (1 | playerShort) + (1 | refNum)
-               + (playerShort | refNum) + as.factor(position),
+               + (0 + playerShort | refNum) + position,
                data = redcard,
                family = binomial(link="logit"),
                control = glmerControl(optimizer = "bobyqa"),
                nAGQ = 0)
 summary(mod3)
 # I do not have the computational power to do this:
-# cannot allocate vector of size 10.9 Gb
-anova(mod1, mod1.1, mod2, mod2x, mod3)
+# "cannot allocate vector of size 10.9 Gb"

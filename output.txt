@@ -1,0 +1,223 @@
+1) MLM RAN IC PLAYER
+
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: redCards ~ 1 + (1 | playerShort)
+   Data: redcard
+Control: glmerControl(optimizer = "bobyqa")
+
+     AIC      BIC   logLik deviance df.resid 
+ 15474.5  15493.8  -7735.2  15470.5   115455 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-0.3012 -0.1132 -0.0986 -0.0878 11.2951 
+
+Random effects:
+ Groups      Name        Variance Std.Dev.
+ playerShort (Intercept) 0.4855   0.6968  
+Number of obs: 115457, groups:  playerShort, 1419
+
+Fixed effects:
+            Estimate Std. Error z value Pr(>|z|)    
+(Intercept) -4.59036    0.04132  -111.1   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+2) MLM RAN IC PLAYER REF
+
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: redCards ~ 1 + (1 | playerShort) + (1 | refNum)
+   Data: redcard
+Control: glmerControl(optimizer = "bobyqa")
+
+     AIC      BIC   logLik deviance df.resid 
+ 15196.1  15225.0  -7595.0  15190.1   115454 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-0.4824 -0.1194 -0.0884 -0.0704 17.0956 
+
+Random effects:
+ Groups      Name        Variance Std.Dev.
+ refNum      (Intercept) 0.6383   0.7989  
+ playerShort (Intercept) 0.4415   0.6644  
+Number of obs: 115457, groups:  refNum, 2893; playerShort, 1419
+
+Fixed effects:
+            Estimate Std. Error z value Pr(>|z|)    
+(Intercept) -5.04812    0.06611  -76.36   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Data: redcard
+Models:
+mod1: redCards ~ 1 + (1 | playerShort)
+mod1.1: redCards ~ 1 + (1 | playerShort) + (1 | refNum)
+       npar   AIC   BIC  logLik deviance  Chisq Df Pr(>Chisq)    
+mod1      2 15474 15494 -7735.2    15470                         
+mod1.1    3 15196 15225 -7595.0    15190 280.45  1  < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+3A) MLM RAN IC PLAYER REF | FIX EF POS
+
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: redCards ~ 1 + (1 | playerShort) + (1 | refNum) + position
+   Data: redcard
+Control: glmerControl(optimizer = "bobyqa")
+
+     AIC      BIC   logLik deviance df.resid 
+ 15127.2  15262.4  -7549.6  15099.2   115443 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-0.4561 -0.1186 -0.0882 -0.0694 18.0028 
+
+Random effects:
+ Groups      Name        Variance Std.Dev.
+ refNum      (Intercept) 0.6451   0.8032  
+ playerShort (Intercept) 0.3604   0.6004  
+Number of obs: 115457, groups:  refNum, 2893; playerShort, 1419
+
+Fixed effects:
+                             Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                   -5.5944     0.1426 -39.233  < 2e-16 ***
+positionCenter Back            1.0703     0.1464   7.313 2.62e-13 ***
+positionCenter Forward         0.3817     0.1594   2.394 0.016661 *  
+positionCenter Midfielder      0.5028     0.2074   2.425 0.015321 *  
+positionDefensive Midfielder   0.5673     0.1599   3.547 0.000390 ***
+positionGoalkeeper             0.6263     0.1652   3.791 0.000150 ***
+positionLeft Fullback          0.5946     0.1728   3.441 0.000581 ***
+positionLeft Midfielder        0.4788     0.1927   2.484 0.012981 *  
+positionLeft Winger            0.1117     0.2323   0.481 0.630739    
+positionRight Fullback         0.5352     0.1772   3.020 0.002527 ** 
+positionRight Midfielder       0.1167     0.2281   0.512 0.608873    
+positionRight Winger           0.5097     0.2036   2.503 0.012304 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) pstnCB pstnCF pstnCM pstnDM pstnGl pstnLF pstnLM
+pstnCntrBck -0.823                                                 
+pstnCntrFrw -0.750  0.729                                          
+pstnCntrMdf -0.574  0.560  0.515                                   
+pstnDfnsvMd -0.746  0.727  0.667  0.512                            
+positnGlkpr -0.728  0.704  0.646  0.497  0.644                     
+pstnLftFllb -0.690  0.672  0.617  0.474  0.615  0.596              
+pstnLftMdfl -0.617  0.603  0.553  0.425  0.552  0.534  0.511       
+pstnLftWngr -0.510  0.500  0.459  0.354  0.457  0.443  0.423  0.379
+pstnRghtFll -0.675  0.657  0.602  0.462  0.601  0.581  0.555  0.498
+pstnRghtMdf -0.523  0.509  0.467  0.359  0.466  0.451  0.431  0.387
+pstnRghtWng -0.585  0.571  0.523  0.403  0.523  0.505  0.483  0.433
+            pstnLW pstnRF pstnRM
+pstnCntrBck                     
+pstnCntrFrw                     
+pstnCntrMdf                     
+pstnDfnsvMd                     
+positnGlkpr                     
+pstnLftFllb                     
+pstnLftMdfl                     
+pstnLftWngr                     
+pstnRghtFll  0.413              
+pstnRghtMdf  0.320  0.421       
+pstnRghtWng  0.359  0.471  0.366
+
+3B) MLM RAN IC PLAYER REF | FIX EF POS (AS FACTOR)
+
+Generalized linear mixed model fit by maximum likelihood (Adaptive
+  Gauss-Hermite Quadrature, nAGQ = 0) [glmerMod]
+ Family: binomial  ( logit )
+Formula: 
+redCards ~ 1 + (1 | playerShort) + (1 | refNum) + as.factor(position)
+   Data: redcard
+Control: glmerControl(optimizer = "bobyqa")
+
+     AIC      BIC   logLik deviance df.resid 
+ 15166.4  15301.6  -7569.2  15138.4   115443 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-0.4181 -0.1243 -0.0970 -0.0792 16.1741 
+
+Random effects:
+ Groups      Name        Variance Std.Dev.
+ refNum      (Intercept) 0.5251   0.7247  
+ playerShort (Intercept) 0.3010   0.5486  
+Number of obs: 115457, groups:  refNum, 2893; playerShort, 1419
+
+Fixed effects:
+                                        Estimate Std. Error z value
+(Intercept)                              -5.2370     0.1309 -39.998
+as.factor(position)Center Back            1.0351     0.1421   7.285
+as.factor(position)Center Forward         0.3733     0.1551   2.408
+as.factor(position)Center Midfielder      0.4953     0.2007   2.468
+as.factor(position)Defensive Midfielder   0.5522     0.1554   3.554
+as.factor(position)Goalkeeper             0.6143     0.1606   3.825
+as.factor(position)Left Fullback          0.5822     0.1678   3.471
+as.factor(position)Left Midfielder        0.4678     0.1870   2.502
+as.factor(position)Left Winger            0.1110     0.2256   0.492
+as.factor(position)Right Fullback         0.5207     0.1721   3.026
+as.factor(position)Right Midfielder       0.1136     0.2223   0.511
+as.factor(position)Right Winger           0.4939     0.1971   2.506
+                                        Pr(>|z|)    
+(Intercept)                              < 2e-16 ***
+as.factor(position)Center Back          3.22e-13 ***
+as.factor(position)Center Forward       0.016050 *  
+as.factor(position)Center Midfielder    0.013574 *  
+as.factor(position)Defensive Midfielder 0.000380 ***
+as.factor(position)Goalkeeper           0.000131 ***
+as.factor(position)Left Fullback        0.000519 ***
+as.factor(position)Left Midfielder      0.012349 *  
+as.factor(position)Left Winger          0.622832    
+as.factor(position)Right Fullback       0.002476 ** 
+as.factor(position)Right Midfielder     0.609235    
+as.factor(position)Right Winger         0.012217 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) a.()CB a.()CF a.()CM a.()DM as.()G a.()LF a.()LM
+as.fctr()CB -0.872                                                 
+as.fctr()CF -0.799  0.736                                          
+as.fctr()CM -0.618  0.569  0.521                                   
+as.fctr()DM -0.796  0.734  0.673  0.519                            
+as.fctr(p)G -0.773  0.710  0.651  0.504  0.649                     
+as.fctr()LF -0.738  0.680  0.623  0.481  0.622  0.602              
+as.fctr()LM -0.661  0.610  0.559  0.432  0.558  0.540  0.517       
+as.fctr()LW -0.548  0.506  0.463  0.358  0.462  0.447  0.428  0.384
+as.fctr()RF -0.719  0.663  0.607  0.469  0.606  0.587  0.562  0.504
+as.fctr()RM -0.556  0.513  0.470  0.363  0.469  0.454  0.435  0.390
+as.fctr()RW -0.627  0.579  0.530  0.410  0.530  0.512  0.491  0.440
+            a.()LW a.()RF a.()RM
+as.fctr()CB                     
+as.fctr()CF                     
+as.fctr()CM                     
+as.fctr()DM                     
+as.fctr(p)G                     
+as.fctr()LF                     
+as.fctr()LM                     
+as.fctr()LW                     
+as.fctr()RF  0.418              
+as.fctr()RM  0.323  0.424       
+as.fctr()RW  0.365  0.478  0.370
+
+4) MODEL COMPARISON
+
+Data: redcard
+Models:
+mod1: redCards ~ 1 + (1 | playerShort)
+mod1.1: redCards ~ 1 + (1 | playerShort) + (1 | refNum)
+mod2: redCards ~ 1 + (1 | playerShort) + (1 | refNum) + position
+mod2x: redCards ~ 1 + (1 | playerShort) + (1 | refNum) + as.factor(position)
+       npar   AIC   BIC  logLik deviance   Chisq Df Pr(>Chisq)    
+mod1      2 15474 15494 -7735.2    15470                          
+mod1.1    3 15196 15225 -7595.0    15190 280.445  1  < 2.2e-16 ***
+mod2     14 15127 15262 -7549.6    15099  90.802 11  1.161e-14 ***
+mod2x    14 15166 15302 -7569.2    15138   0.000  0               
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
