@@ -4,9 +4,13 @@ require(here)
 require(lme4) #glmer for MLMs
 # read https://cran.r-project.org/web/packages/lme4/lme4.pdf for interpretation.
 require(lmerTest) # sig. values for glmer
-require(MuMIn)
+require(MuMIn) #R Squared
 # read https://cran.r-project.org/web/packages/MuMIn/MuMIn.pdf for interpretation
-
+require(oddsratio)
+# generates odds ratios for GLMM output; not sure how this works?
+require(sjPlot)
+# creates nice overview tables.
+### DATA MGMT
 # read data
 redcard <- read.csv(here('Data', 'CrowdstormingDataJuly1st.csv'), stringsAsFactors = FALSE)
 
@@ -42,6 +46,7 @@ mod1 <- glmer(redCards ~ 1 + (1 | playerShort),
               nAGQ = 0)
 summary(mod1)
 r.squaredGLMM(mod1)
+tab_model(mod1)
 # random intercept for players & referees
 mod1.1 <- glmer(redCards ~ 1 + (1 | playerShort) + (1 | refNum),
               data = redcard,
@@ -50,6 +55,8 @@ mod1.1 <- glmer(redCards ~ 1 + (1 | playerShort) + (1 | refNum),
               nAGQ = 0)
 summary(mod1.1)
 r.squaredGLMM(mod1.1)
+tab_model(mod1.1)
+
 # compare models
 anova(mod1, mod1.1)
 
@@ -73,7 +80,10 @@ mod2 <- glmer(redCards ~ position + avrate + (1 | playerShort)
                 nAGQ = 0)
 summary(mod2)
 r.squaredGLMM(mod2)
+tab_model(mod2)
+
 # compare models
+anova(mod2, mod2x)
 anova(mod1, mod1.1, mod2)
 
 mod2x <- glmer(redCards ~ as.factor(position) + avrate 
@@ -84,7 +94,9 @@ mod2x <- glmer(redCards ~ as.factor(position) + avrate
               nAGQ = 0)
 summary(mod2x)
 r.squaredGLMM(mod2x)
-#as.factor approach gives different estimates - why?
+tab_model(mod2x)
+
+# Including fixed factors using as.factor() does not change the output.
 
 anova(mod1, mod1.1, mod2, mod2x)
 
@@ -102,3 +114,4 @@ mod3 <- glmer(redCards ~ position + avrate +  (1 | playerShort)
 #sink()
 summary(mod3)
 r.squaredGLMM(mod3)
+tab_model(mod3)
