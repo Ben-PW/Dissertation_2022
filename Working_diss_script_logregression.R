@@ -9,7 +9,7 @@ redcard <- na.omit(redcard)
 # Take average of rater scores for player skin tone
 redcard$avrate <- redcard$rater1 + ((redcard$rater2 - redcard$rater1) / 2)
 
-################################## Data transformatinos for Logit MLM
+############################################# Data transformatinos ####################################
   
 # 1. DV (redCards) needs to be restructured as dichotomous:
 summary(as.factor(redcard$redCards))
@@ -26,26 +26,57 @@ redcard$refCountry <- as.factor(redcard$refCountry)
 redcard$birthday <- as.Date(redcard$birthday, '%d.%m.%Y')
 season_date <- as.Date('2013-01-01')
 redcard$age <- as.numeric((season_date-redcard$birthday)/365)
+rm(season_date)
 
-########################## Beginning Multiverse Analysis
+# collapse position variable in same manner to team 28 (hopefully reduce vector length)
+library(forcats)
+
+# Leaves with four categories, Goalkeeper, Back, Middle, Front
+redcard$position <- 
+  fct_recode(redcard$position, 
+             "Back" = "Left Fullback",
+             "Back" = "Right Fullback",
+             "Back" = "Center Fullback",
+             "Back" = "Center Back",
+             "Middle" = "Left Midfielder",
+             "Middle" = "Center Midfielder",
+             "Middle" =  "Right Midfielder",
+             "Middle" = "Attacking Midfielder",
+             "Middle" = "Defensive Midfielder",
+             "Front" = "Left Winger",
+             "Front" = "Right Winger",
+             "Front" = "Center Forward" )
+
+# Specifying 'Back' as reference category
+#### NB for some reason doing this makes the log regression have a panic attack
+redcard$position <- 
+  fct_relevel(redcard$position, 
+              "Back")
+
+redcard$position <- as.factor(redcard$position)
+
+
+######################################### Beginning Multiverse Analysis ################################
 
 # Create list of potential covariates 
+# Take care NOT to include leagueCountry - original authors advised against it
 covariates_list <- list(position = c(NA, 'position'),
                         height = c(NA, 'height'),
                         weight = c(NA, 'weight'),
                         club = c(NA, 'club'),
                         goals = c(NA, 'goals'),
+                        age = c(NA, 'age'),
                         victories = c(NA, 'victories'))
                         
 
 
 
-# Create list of all possible combinations
+############# Create list of all possible combinations
 library(tidyverse)
 
 
-###### Making a grid combining the NA and other values. This then outputs a list
-###### of every possible combination of the selected covariates
+# Making a grid combining the NA and other values. This then outputs a list
+# of every possible combination of the selected covariates
 covariate_grid <- expand.grid(covariates_list) 
 rm(covariates_list)
 
@@ -59,13 +90,15 @@ covariate_grid <- covariate_grid %>%
 # regression equation
 
 
-# Define new variable 'output' as a list. This is to allow the loop to store multiple outputs 
-# instead of just overwriting them
+######### Define new variable 'output' as a list. This is to allow the loop to store multiple outputs 
+######### instead of just overwriting them
 output <- list()
 
 
 # Defining a new variable R2 - NA for now as it will be filled once the loop is run
-R2s <- NA
+R2conditional <- NA
+
+############################## Main multiverse loop
 
 require(lme4)
 require(lmerTest)
@@ -83,24 +116,24 @@ for(i in 1:nrow(covariate_grid)) {
                     control = glmerControl(optimizer = "bobyqa"),
                     nAGQ = 0)
   
-  R2s[i] <- modelsummary::get_gof(output[[i]])$r2.conditional
+  R2conditional[i] <- modelsummary::get_gof(output[[i]])$r2.conditional
 }
 
 
 
 output_table <- data.frame(covariates = covariate_grid,
-                           R2 = R2s)
+                           R2 = R2conditional)
 
 # As before, defining a new R2 variable to be used in loop. This loop is to extract specific values for 
 # plotting
 
-R2conditional <- NA
+#R2conditional <- NA
 
-for (i in 1:nrow(covariate_grid)) {
+#for (i in 1:nrow(covariate_grid)) {
   
   #selecting just the conditional R2 values from the results of the previous loop
-  R2conditional[i] <- modelsummary::get_gof(output[[i]])$r2.conditional
-}
+#  R2conditional[i] <- modelsummary::get_gof(output[[i]])$r2.conditional
+#}
 
 # Remove output variable as it is large and no longer needed
 rm(output)
