@@ -74,14 +74,13 @@ covariates_list <- list(position = c(NA, 'position'),
 ############# Create list of all possible combinations
 library(tidyverse)
 
-
 # Making a grid combining the NA and other values. This then outputs a list
 # of every possible combination of the selected covariates
 covariate_grid <- expand.grid(covariates_list) 
 rm(covariates_list)
 
-# First row was two NA values so it was deleted
-covariate_grid <- covariate_grid[-1,]
+# First row was two NA values so it was deleted (undone because it gives baseline avrate score)
+#covariate_grid <- covariate_grid[-1,]
 
 covariate_grid <- covariate_grid %>%
   tidyr::unite(formula, position:victories, sep = '+', na.rm = TRUE)
@@ -95,8 +94,9 @@ covariate_grid <- covariate_grid %>%
 output <- list()
 
 
-# Defining a new variable R2 - NA for now as it will be filled once the loop is run
+# Defining a new variables - NA for now as they will be filled once the loop is run
 R2conditional <- NA
+predictorR2 <- NA
 
 ############################## Main multiverse loop
 
@@ -116,7 +116,11 @@ for(i in 1:nrow(covariate_grid)) {
                     control = glmerControl(optimizer = "bobyqa"),
                     nAGQ = 0)
   
+  # Getting overall model fit for each row of covariate_grid
   R2conditional[i] <- modelsummary::get_gof(output[[i]])$r2.conditional
+  
+  # Getting individual predictor R2 for each row of covariate_grid
+  predictorR2 <- as.data.frame(summary(output[[i]])$coefficients[,1])
 }
 
 
