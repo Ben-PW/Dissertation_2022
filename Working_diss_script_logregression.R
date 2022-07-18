@@ -49,9 +49,9 @@ redcard$position <-
 
 # Specifying 'Back' as reference category
 #### NB for some reason doing this makes the log regression have a panic attack
-redcard$position <- 
-  fct_relevel(redcard$position, 
-              "Back")
+#redcard$position <- 
+#  fct_relevel(redcard$position, 
+#              "Back")
 
 redcard$position <- as.factor(redcard$position)
 
@@ -76,13 +76,13 @@ library(tidyverse)
 
 # Making a grid combining the NA and other values. This then outputs a list
 # of every possible combination of the selected covariates
-covariate_grid <- expand.grid(covariates_list) 
-rm(covariates_list)
+covariates_list <- expand.grid(covariates_list) 
+
 
 # First row was two NA values so it was deleted (undone because it gives baseline avrate score)
 #covariate_grid <- covariate_grid[-1,]
 
-covariate_grid <- covariate_grid %>%
+covariate_grid <- covariates_list %>%
   tidyr::unite(formula, position:victories, sep = '+', na.rm = TRUE)
 # in the above code, covariate_grid was changed so that all the covariates were listed in a single
 # columnn labelled 'formula', where each covariate was separated by a '+' to allow for inclusion in a 
@@ -102,13 +102,20 @@ predictorR2 <- NA
 
 require(lme4)
 require(lmerTest)
+require(tictoc)
 
 for(i in 1:nrow(covariate_grid)) {
   # printing [i] just to track progress of analysis
   print(i)
   
+  # see how long full loop is taking
+  tic("Total")
+  
+  # see how long regression is taking
+  tic("Regression")
+  
   # each row of covariate_grid is now used as a formula for the regression
-  output[[i]] <- glmer(data = redcard,
+  output <- glmer(data = redcard,
                     formula = paste('redCards ~ avrate +',
                                     covariate_grid[i, 'formula'], 
                                     '+ (1 | playerShort) + (1 | refNum)'),
@@ -116,14 +123,22 @@ for(i in 1:nrow(covariate_grid)) {
                     control = glmerControl(optimizer = "bobyqa"),
                     nAGQ = 0)
   
+  toc()
+  
+  # see how long data extraction is taking
+  tic("Data extraction")
   # Getting overall model fit for each row of covariate_grid
-  R2conditional[i] <- modelsummary::get_gof(output[[i]])$r2.conditional
+  R2conditional[i] <- modelsummary::get_gof(output)$r2.conditional
   
   # Getting individual predictor R2 for each row of covariate_grid
-  predictorR2 <- as.data.frame(summary(output[[i]])$coefficients[,1])
+  predictorR2[i] <- as.data.frame(summary(output)$coefficients[,1])
+  
+  toc()
+  toc()
 }
 
-
+# Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
+length(R2conditional) <- nrow(covariate_grid)
 
 output_table <- data.frame(covariates = covariate_grid,
                            R2 = R2conditional)
