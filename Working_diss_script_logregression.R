@@ -48,7 +48,7 @@ redcard$position <-
              "Front" = "Center Forward" )
 
 # Specifying 'Back' as reference category
-#### NB for some reason doing this makes the log regression have a panic attack
+#### NB for some reason doing this makes the log regression angry
 #redcard$position <- 
 #  fct_relevel(redcard$position, 
 #              "Back")
@@ -59,7 +59,6 @@ redcard$position <- as.factor(redcard$position)
 ######################################### Beginning Multiverse Analysis ################################
 
 # Create list of potential covariates 
-# Take care NOT to include leagueCountry - original authors advised against it
 covariates_list <- list(position = c(NA, 'position'),
                         height = c(NA, 'height'),
                         weight = c(NA, 'weight'),
@@ -88,17 +87,16 @@ covariate_grid <- covariates_list %>%
 # columnn labelled 'formula', where each covariate was separated by a '+' to allow for inclusion in a 
 # regression equation
 
+######################################### Main multiverse loop ##########################################
 
-######### Define new variable 'output' as a list. This is to allow the loop to store multiple outputs 
-######### instead of just overwriting them
+# Define new variable 'output' as a list. This is to allow the loop to store multiple outputs 
+# instead of just overwriting them
 output <- list()
 
 
 # Defining a new variables - NA for now as they will be filled once the loop is run
 R2conditional <- NA
 predictorR2 <- NA
-
-############################## Main multiverse loop
 
 require(lme4)
 require(lmerTest)
@@ -127,11 +125,12 @@ for(i in 1:nrow(covariate_grid)) {
   
   # see how long data extraction is taking
   tic("Data extraction")
+  
   # Getting overall model fit for each row of covariate_grid
   R2conditional[i] <- modelsummary::get_gof(output)$r2.conditional
   
   # Getting individual predictor R2 for each row of covariate_grid
-  predictorR2[i] <- as.data.frame(summary(output)$coefficients[,1])
+  predictorR2[i] <- (summary(output)$coefficients[,1])
   
   toc()
   toc()
@@ -143,21 +142,11 @@ length(R2conditional) <- nrow(covariate_grid)
 output_table <- data.frame(covariates = covariate_grid,
                            R2 = R2conditional)
 
-# As before, defining a new R2 variable to be used in loop. This loop is to extract specific values for 
-# plotting
-
-#R2conditional <- NA
-
-#for (i in 1:nrow(covariate_grid)) {
-  
-  #selecting just the conditional R2 values from the results of the previous loop
-#  R2conditional[i] <- modelsummary::get_gof(output[[i]])$r2.conditional
-#}
-
 # Remove output variable as it is large and no longer needed
 rm(output)
 
-######## Creating plot of results
+######################################### Creating plot of results #####################################
+
 plot <- cbind(covariate_grid, R2conditional) 
 
 # Order results of plot by R2 value
@@ -178,7 +167,10 @@ dashboard <- plot2 %>%
   gather(Bigdecision, Decision, -R2conditional, -n) %>%
   filter(Decision != 'NA')
 
+rm(plot2)
+
 # Creating levels in Bigdecision variable that correspond to data in covariate_grid rows
+
 dashboard$Bigdecision <- factor(dashboard$Bigdecision, 
                                 levels = names(covariate_grid))
 
