@@ -130,11 +130,29 @@ for(i in 1:nrow(covariate_grid)) {
   R2conditional[i] <- modelsummary::get_gof(output)$r2.conditional
   
   # Getting individual predictor R2 for each row of covariate_grid
-  predictorR2[i] <- (summary(output)$coefficients[,1])
+  predictorR2[i] <- as.data.frame(summary(output)$coefficients[,1])
   
   toc()
   toc()
 }
+
+############ Turning list of R2 values into a data frame
+# find length of each element of predictor_R2 list
+len <- sapply(predictorR2, length)
+
+# longest length dictates number of rows in data frame
+n <- max(len)
+
+# finds number of NAs required for each row to be of same length to longest
+len <- n - len
+
+# mapply(function(x,y) c( x , rep( NA , y )), predictorR2, len)
+# above line does similar to below but long format
+
+# magically creates a data frame don't ask me how
+R2_df <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2, len)))
+
+#################### Turning conditional R2 values into data frame
 
 # Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
 length(R2conditional) <- nrow(covariate_grid)
