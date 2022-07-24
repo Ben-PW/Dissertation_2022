@@ -55,6 +55,23 @@ redcard$position <-
 
 redcard$position <- as.factor(redcard$position)
 
+################################## Resampling
+library(tidyverse)
+# Select & resample observations without red cards
+nocard <- redcard %>% filter (redCards == 0) 
+nocard <- nocard[sample(nrow(nocard), size = 1455, replace = FALSE),]
+
+# Select & resample observations with red cards 
+# This step is redundant as sample = resample
+rc_only <- redcard %>% filter (redCards == 1) 
+rc_only <- rc_only[sample(nrow(rc_only), size = 1455, replace = FALSE),]
+
+# Arrange rows by players' ID and red cards
+redcard <- bind_rows(nocard,rc_only)
+redcard <- arrange(redcard_sample, playerShort, redCards)
+
+# Clean up the environment
+rm(nocard,rc_only)
 
 ######################################### Beginning Multiverse Analysis ################################
 
@@ -71,7 +88,6 @@ covariates_list <- list(position = c(NA, 'position'),
 
 
 ############# Create list of all possible combinations
-library(tidyverse)
 
 # Making a grid combining the NA and other values. This then outputs a list
 # of every possible combination of the selected covariates
@@ -98,9 +114,9 @@ output <- list()
 R2conditional <- NA
 predictorR2 <- NA
 
-require(lme4)
-require(lmerTest)
-require(tictoc)
+library(lme4)
+library(lmerTest)
+library(tictoc)
 
 for(i in 1:nrow(covariate_grid)) {
   # printing [i] just to track progress of analysis
@@ -206,3 +222,6 @@ dashboardfinal <- ggplot(data = dashboard,
 
 library(patchwork)
 plotfinal / dashboardfinal
+
+# Save resampled data for reference - each run might differ slightly
+write.csv(redcard, here('Data', 'redcard_resample.csv'))
