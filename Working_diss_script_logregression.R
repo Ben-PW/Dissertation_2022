@@ -28,6 +28,14 @@ season_date <- as.Date('2013-01-01')
 redcard$age <- as.numeric((season_date-redcard$birthday)/365)
 rm(season_date)
 
+# creating alternative DV which covers likelihood of any kind of penalisation
+redcard$cards <- redcard$yellowCards + redcard$yellowReds + redcard$redCards
+summary(as.factor(redcard$cards))
+
+# all types of cards are recoded to 1, solves illogical values
+redcard$cards <- ifelse(redcard$cards > 1, 1, redcard$cards)
+redcard$cards <- as.factor(redcard$cards)
+
 # collapse position variable in same manner to team 28 (hopefully reduce vector length)
 library(forcats)
 
@@ -55,23 +63,6 @@ redcard$position <-
 
 redcard$position <- as.factor(redcard$position)
 
-################################## Resampling
-library(tidyverse)
-# Select & resample observations without red cards
-nocard <- redcard %>% filter (redCards == 0) 
-nocard <- nocard[sample(nrow(nocard), size = 1455, replace = FALSE),]
-
-# Select & resample observations with red cards 
-# This step is redundant as sample = resample
-rc_only <- redcard %>% filter (redCards == 1) 
-rc_only <- rc_only[sample(nrow(rc_only), size = 1455, replace = FALSE),]
-
-# Arrange rows by players' ID and red cards
-redcard <- bind_rows(nocard,rc_only)
-redcard <- arrange(redcard_sample, playerShort, redCards)
-
-# Clean up the environment
-rm(nocard,rc_only)
 
 ######################################### Beginning Multiverse Analysis ################################
 
@@ -84,7 +75,7 @@ covariates_list <- list(position = c(NA, 'position'),
                         goals = c(NA, 'goals'),
                         age = c(NA, 'age'),
                         meanIAT = c(NA, 'meanIAT'),
-                        meanEXP = c(NA, 'meanEXP'),
+                        meanEXP = c(NA, 'meanExp'),
                         games = c(NA, 'games'),
                         refCountry = c(NA, 'refCountry'),
                         victories = c(NA, 'victories'))
@@ -93,6 +84,7 @@ covariates_list <- list(position = c(NA, 'position'),
 
 
 ############# Create list of all possible combinations
+library(tidyverse)
 
 # Making a grid combining the NA and other values. This then outputs a list
 # of every possible combination of the selected covariates
@@ -119,9 +111,9 @@ output <- list()
 R2conditional <- NA
 predictorR2 <- NA
 
-library(lme4)
-library(lmerTest)
-library(tictoc)
+require(lme4)
+require(lmerTest)
+require(tictoc)
 
 for(i in 1:nrow(covariate_grid)) {
   # printing [i] just to track progress of analysis
@@ -134,7 +126,7 @@ for(i in 1:nrow(covariate_grid)) {
   tic("Regression")
   
   # each row of covariate_grid is now used as a formula for the regression
-  output <- glmer(data = redcard,
+  output <- glmer(data = redcard[1:5000,],
                     formula = paste('redCards ~ avrate +',
                                     covariate_grid[i, 'formula'], 
                                     '+ (1 | playerShort) + (1 | refNum)'),
@@ -217,7 +209,7 @@ dashboard$Bigdecision <- factor(dashboard$Bigdecision,
 dashboardfinal <- ggplot(data = dashboard,
                          aes(x = n, y = Decision, colour = Bigdecision)) +
   facet_grid(Bigdecision ~ ., scales = "free", space = "free", drop = ) +
-  geom_point(aes(colour = Bigdecision), shape = 108, size = 7) +
+  geom_point(aes(colour = Bigdecision), shape = 108, size = 1) +
   labs(x = 'specification number') +
   theme_minimal() +
   theme(legend.position = "none",
@@ -226,7 +218,5 @@ dashboardfinal <- ggplot(data = dashboard,
         strip.background = element_blank())
 
 library(patchwork)
+plotfinal
 plotfinal / dashboardfinal
-
-# Save resampled data for reference - each run might differ slightly
-write.csv(redcard, here('Data', 'redcard_resample.csv'))
