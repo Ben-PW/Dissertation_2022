@@ -63,6 +63,23 @@ redcard$position <-
 
 redcard$position <- as.factor(redcard$position)
 
+################################## Resampling
+library(tidyverse)
+# Select & resample observations without red cards
+nocard <- redcard %>% filter (redCards == 0) 
+nocard <- nocard[sample(nrow(nocard), size = 1455, replace = FALSE),]
+
+# Select & resample observations with red cards 
+# This step is redundant as sample = resample
+rc_only <- redcard %>% filter (redCards == 1) 
+rc_only <- rc_only[sample(nrow(rc_only), size = 1455, replace = FALSE),]
+
+# Arrange rows by players' ID and red cards
+redcard <- bind_rows(nocard,rc_only)
+redcard <- arrange(redcard_sample, playerShort, redCards)
+
+# Clean up the environment
+rm(nocard,rc_only)
 
 ######################################### Beginning Multiverse Analysis ################################
 
@@ -220,3 +237,6 @@ dashboardfinal <- ggplot(data = dashboard,
 library(patchwork)
 plotfinal
 plotfinal / dashboardfinal
+
+# Save resampled data for reference - each run might differ slightly
+write.csv(redcard, here('Data', 'redcard_sample.csv'))
