@@ -60,11 +60,16 @@ redcard$position <- as.factor(redcard$position)
 
 # Create list of potential covariates 
 covariates_list <- list(position = c(NA, 'position'),
+                        yellowCards = c(NA, 'yellowCards'),
                         height = c(NA, 'height'),
                         weight = c(NA, 'weight'),
                         club = c(NA, 'club'),
                         goals = c(NA, 'goals'),
                         age = c(NA, 'age'),
+                        meanIAT = c(NA, 'meanIAT'),
+                        meanEXP = c(NA, 'meanEXP'),
+                        games = c(NA, 'games'),
+                        refCountry = c(NA, 'refCountry'),
                         victories = c(NA, 'victories'))
                         
 
