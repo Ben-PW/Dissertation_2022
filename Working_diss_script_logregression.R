@@ -1,5 +1,4 @@
-################################## Loading data
-
+############################################# Data import ####################################
 library(here)
 redcard <- read.csv(here('Data', 'CrowdstormingDataJuly1st.csv'), stringsAsFactors = FALSE)
 
@@ -9,14 +8,31 @@ redcard <- na.omit(redcard)
 # Take average of rater scores for player skin tone
 redcard$avrate <- redcard$rater1 + ((redcard$rater2 - redcard$rater1) / 2)
 
-############################################# Data transformatinos ####################################
-  
-# 1. DV (redCards) needs to be restructured as dichotomous:
+# Collapsing redCards = 2 into redCards = 1 to create a binary DV:
 summary(as.factor(redcard$redCards))
-  
-# replacing the value of 2 with 1
 redcard["redCards"][redcard["redCards"] == 2] <- 1
-summary(as.factor(redcard$redCards))
+#summary(as.factor(redcard$redCards))
+############################################# Data resampling ####################################
+library(ROSE)
+
+# Perform over and undersampling to obtain balanced cases
+redcard.resample <- ovun.sample(redCards~., data = redcard, method = "both", 
+                        p = 0.5, N = 30000, seed = 777)
+redcard <- redcard.resample$data
+# Retrieved 30,000 observations with redCards = 0/1 ratio being roughly 1:1
+
+rm(redcard.resample)
+# Drop arbitrary objects
+############################################# Data transformations ####################################
+
+# Collapsing IV levels >= 2 into binary values (0,1):
+redcard["yellowCards"][redcard["yellowCards"] >= 2] <- 1
+summary(as.factor(redcard$yellowCards))
+#redcard$yellowCards <- as.factor(redcard$yellowCards)
+
+redcard["yellowReds"][redcard["yellowReds"] >= 2] <- 1
+summary(as.factor(redcard$yellowReds))
+#redcard$yellowReds <- as.factor(redcard$yellowReds)
 
 # refCountry needs to be recoded as a factor as well
 redcard$refCountry <- as.factor(redcard$refCountry)
@@ -54,6 +70,9 @@ redcard$position <-
              "Front" = "Left Winger",
              "Front" = "Right Winger",
              "Front" = "Center Forward" )
+# Getting a warming: Unknown levels in `f`: Center Fullback
+# Might be worh mentioning other positions (Golakeeper) just for the sake
+# of clarity
 
 # Specifying 'Back' as reference category
 #### NB for some reason doing this makes the log regression angry
@@ -63,26 +82,8 @@ redcard$position <-
 
 redcard$position <- as.factor(redcard$position)
 
-################################## Resampling
-library(tidyverse)
-# Select & resample observations without red cards
-nocard <- redcard %>% filter (redCards == 0) 
-nocard <- nocard[sample(nrow(nocard), size = 1455, replace = FALSE),]
-
-# Select & resample observations with red cards 
-# This step is redundant as sample = resample
-rc_only <- redcard %>% filter (redCards == 1) 
-rc_only <- rc_only[sample(nrow(rc_only), size = 1455, replace = FALSE),]
-
-# Arrange rows by players' ID and red cards
-redcard <- bind_rows(nocard,rc_only)
-redcard <- arrange(redcard_sample, playerShort, redCards)
-
-# Clean up the environment
-rm(nocard,rc_only)
-
 ######################################### Beginning Multiverse Analysis ################################
-
+library(tidyverse)
 # Create list of potential covariates 
 covariates_list <- list(position = c(NA, 'position'),
                         yellowCards = c(NA, 'yellowCards'),
@@ -101,7 +102,6 @@ covariates_list <- list(position = c(NA, 'position'),
 
 
 ############# Create list of all possible combinations
-library(tidyverse)
 
 # Making a grid combining the NA and other values. This then outputs a list
 # of every possible combination of the selected covariates
@@ -114,7 +114,7 @@ covariates_list <- expand.grid(covariates_list)
 covariate_grid <- covariates_list %>%
   tidyr::unite(formula, position:victories, sep = '+', na.rm = TRUE)
 # in the above code, covariate_grid was changed so that all the covariates were listed in a single
-# columnn labelled 'formula', where each covariate was separated by a '+' to allow for inclusion in a 
+# column labelled 'formula', where each covariate was separated by a '+' to allow for inclusion in a 
 # regression equation
 
 ######################################### Main multiverse loop ##########################################
@@ -143,7 +143,7 @@ for(i in 1:nrow(covariate_grid)) {
   tic("Regression")
   
   # each row of covariate_grid is now used as a formula for the regression
-  output <- glmer(data = redcard[1:5000,],
+  output <- glmer(data = redcard,
                     formula = paste('redCards ~ avrate +',
                                     covariate_grid[i, 'formula'], 
                                     '+ (1 | playerShort) + (1 | refNum)'),
@@ -239,4 +239,4 @@ plotfinal
 plotfinal / dashboardfinal
 
 # Save resampled data for reference - each run might differ slightly
-write.csv(redcard, here('Data', 'redcard_sample.csv'))
+write.csv(redcard, here('Data', 'redcard_resampled.csv'))
