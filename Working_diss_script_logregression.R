@@ -2,6 +2,9 @@
 library(here)
 redcard <- read.csv(here('Data', 'CrowdstormingDataJuly1st.csv'), stringsAsFactors = FALSE)
 
+# Create identifying variable for data screening
+redcard$rownumber <- 1:nrow(redcard)
+
 # Remove NA values
 redcard <- na.omit(redcard)
 
@@ -11,21 +14,13 @@ redcard$avrate <- redcard$rater1 + ((redcard$rater2 - redcard$rater1) / 2)
 # Collapsing redCards = 2 into redCards = 1 to create a binary DV:
 summary(as.factor(redcard$redCards))
 redcard["redCards"][redcard["redCards"] == 2] <- 1
+
 #summary(as.factor(redcard$redCards))
-############################################# Data resampling ####################################
-library(ROSE)
 
-# Perform over and undersampling to obtain balanced cases
-redcard.resample <- ovun.sample(redCards~., data = redcard, method = "both", 
-                        p = 0.5, N = 30000, seed = 777)
-redcard <- redcard.resample$data
-# Retrieved 30,000 observations with redCards = 0/1 ratio being roughly 1:1
 
-rm(redcard.resample)
-# Drop arbitrary objects
 ############################################# Data transformations ####################################
 
-# Collapsing IV levels >= 2 into binary values (0,1):
+# 1. Collapsing IV levels >= 2 into binary values (0,1):
 redcard["yellowCards"][redcard["yellowCards"] >= 2] <- 1
 summary(as.factor(redcard$yellowCards))
 #redcard$yellowCards <- as.factor(redcard$yellowCards)
@@ -34,17 +29,17 @@ redcard["yellowReds"][redcard["yellowReds"] >= 2] <- 1
 summary(as.factor(redcard$yellowReds))
 #redcard$yellowReds <- as.factor(redcard$yellowReds)
 
-# refCountry needs to be recoded as a factor as well
+# 2. refCountry needs to be recoded as a factor as well
 redcard$refCountry <- as.factor(redcard$refCountry)
 
-# age variable needs to be calculated
+# 3. age variable needs to be calculated
 # numerical value for age will be calculated for ease of regression in same manner to team 11
 redcard$birthday <- as.Date(redcard$birthday, '%d.%m.%Y')
 season_date <- as.Date('2013-01-01')
 redcard$age <- as.numeric((season_date-redcard$birthday)/365)
 rm(season_date)
 
-# creating alternative DV which covers likelihood of any kind of penalisation
+# 4. creating alternative DV which covers likelihood of any kind of penalisation
 redcard$cards <- redcard$yellowCards + redcard$yellowReds + redcard$redCards
 summary(as.factor(redcard$cards))
 
@@ -52,7 +47,7 @@ summary(as.factor(redcard$cards))
 redcard$cards <- ifelse(redcard$cards > 1, 1, redcard$cards)
 redcard$cards <- as.factor(redcard$cards)
 
-# collapse position variable in same manner to team 28 (hopefully reduce vector length)
+# 5. collapse position variable in same manner to team 28 (hopefully reduce vector length)
 library(forcats)
 
 # Leaves with four categories, Goalkeeper, Back, Middle, Front
@@ -81,6 +76,27 @@ redcard$position <-
 #              "Back")
 
 redcard$position <- as.factor(redcard$position)
+redcard$refCountry <- as.factor(redcard$refCountry)
+
+# 8. Removing illogical values from yellowCards and yellowReds
+
+redcard$yellowCards <- ifelse(redcard$yellowCards > 1, 1, redcard$yellowCards)
+redcard$yellowCards <- as.factor(redcard$yellowCards)
+
+redcard$yellowReds <- ifelse(redcard$yellowReds > 1, 1, redcard$yellowReds)
+redcard$yellowReds <- as.factor(redcard$yellowReds)
+
+############################################# Data resampling ####################################
+library(ROSE)
+
+# Perform over and undersampling to obtain balanced cases
+redcard.resample <- ovun.sample(redCards~., data = redcard, method = "both", 
+                                p = 0.5, N = 30000, seed = 777)
+redcard <- redcard.resample$data
+# Retrieved 30,000 observations with redCards = 0/1 ratio being roughly 1:1
+
+rm(redcard.resample)
+# Drop arbitrary objects
 
 ######################################### Beginning Multiverse Analysis ################################
 library(tidyverse)
