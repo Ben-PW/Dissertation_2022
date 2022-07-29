@@ -265,6 +265,7 @@ write.csv(redcard, here('Data', 'redcard_resampled.csv'))
 
 ############################################# Data re-import ####################################
 
+library(here)
 redcard <- read.csv(here('Data', 'CrowdstormingDataJuly1st.csv'), stringsAsFactors = FALSE)
 
 # Create identifying variable for data screening
@@ -352,11 +353,11 @@ n <- max(len)
 # finds number of NAs required for each row to be of same length to longest
 len <- n - len
 
-# mapply(function(x,y) c( x , rep( NA , y )), predictorR2, len)
+cmR2_df_poiss <- data.frame(mapply(function(x,y) c( x , rep( NA , y )), R2conditional_poiss, len))
 # above line does similar to below but long format
 
 # magically creates a data frame don't ask me how
-R2_df_poiss <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), R2conditional_poiss, len)))
+#cmR2_df_poiss <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), R2conditional_poiss, len)))
 
 
 ############ Turning list of predictor R2 values into a data frame
@@ -373,7 +374,7 @@ len <- n - len
 # above line does similar to below but long format
 
 # magically creates a data frame don't ask me how
-R2_df_poiss <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2_poiss, len)))
+predR2_df_poiss <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2_poiss, len)))
 
 #################### Turning conditional R2 values into data frame
 
