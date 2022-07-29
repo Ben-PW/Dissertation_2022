@@ -256,3 +256,158 @@ plotfinal / dashboardfinal
 
 # Save resampled data for reference - each run might differ slightly
 write.csv(redcard, here('Data', 'redcard_resampled.csv'))
+
+
+#############################################                   ########################################
+############################################# Second Multiverse ########################################
+#############################################                   ########################################
+
+
+############################################# Data re-import ####################################
+library(here)
+redcard <- read.csv(here('Data', 'CrowdstormingDataJuly1st.csv'), stringsAsFactors = FALSE)
+
+# Create identifying variable for data screening
+redcard$rownumber <- 1:nrow(redcard)
+
+# Remove NA values
+redcard <- na.omit(redcard)
+
+# Take average of rater scores for player skin tone
+redcard$avrate <- redcard$rater1 + ((redcard$rater2 - redcard$rater1) / 2)
+
+########################################### transformations ##########################################
+# refCountry recoded as a factor 
+redcard$refCountry <- as.factor(redcard$refCountry)
+
+# calculating age variable
+redcard$birthday <- as.Date(redcard$birthday, '%d.%m.%Y')
+season_date <- as.Date('2013-01-01')
+redcard$age <- as.numeric((season_date-redcard$birthday)/365)
+rm(season_date)
+
+# creating alternative DV which covers likelihood of any kind of penalisation
+redcard$cards <- redcard$yellowCards + redcard$yellowReds + redcard$redCards
+summary(as.factor(redcard$cards))
+
+
+######################################### Second multiverse loop ##########################################
+
+# Define new variable 'output' as a list. This is to allow the loop to store multiple outputs 
+# instead of just overwriting them
+output_poiss <- list()
+
+
+# Defining a new variables - NA for now as they will be filled once the loop is run
+R2conditional_poiss <- NA
+predictorR2_poiss <- NA
+
+require(lme4)
+require(lmerTest)
+require(tictoc)
+
+for(i in 1:nrow(covariate_grid)) {
+  # printing [i] just to track progress of analysis
+  print(i)
+  
+  # see how long full loop is taking
+  tic("Total")
+  
+  # see how long regression is taking
+  tic("Regression")
+  
+  # each row of covariate_grid is now used as a formula for the regression
+  output_poiss <- glmer(data = redcard,
+                  formula = paste('redCards ~ avrate +',
+                                  covariate_grid[i, 'formula'], 
+                                  '+ (1 | playerShort) + (1 | refNum)'),
+                  family = poisson(link="log"),
+                  control = glmerControl(optimizer = "bobyqa"),
+                  nAGQ = 0)
+  
+  toc()
+  
+  # see how long data extraction is taking
+  tic("Data extraction")
+  
+  # Getting overall model fit for each row of covariate_grid
+  R2conditional_poiss[i] <- modelsummary::get_gof(output)$r2.conditional
+  
+  # Getting individual predictor R2 for each row of covariate_grid
+  predictorR2_poiss[i] <- as.data.frame(summary(output)$coefficients[,1])
+  
+  toc()
+  toc()
+}
+
+############ Turning list of R2 values into a data frame
+# find length of each element of predictor_R2 list
+len <- sapply(predictorR2_poiss, length)
+
+# longest length dictates number of rows in data frame
+n <- max(len)
+
+# finds number of NAs required for each row to be of same length to longest
+len <- n - len
+
+# mapply(function(x,y) c( x , rep( NA , y )), predictorR2, len)
+# above line does similar to below but long format
+
+# magically creates a data frame don't ask me how
+R2_df_poiss <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2_poiss, len)))
+
+#################### Turning conditional R2 values into data frame
+
+# Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
+length(R2conditional_poiss) <- nrow(covariate_grid)
+
+output_table_poiss <- data.frame(covariates = covariate_grid,
+                           R2 = R2conditional_poiss)
+
+# Remove output variable as it is large and no longer needed
+rm(output)
+
+######################################### Creating plot of results #####################################
+
+plot_poiss <- cbind(covariate_grid, R2conditional_poiss) 
+
+# Order results of plot by R2 value
+plot2_poiss <- plot[order(plot$R2conditional_poiss), ]
+rm(plot)
+
+# Creating a grouping variable (n) for each row of covariate_grid
+plot2_poiss$n <- 1:nrow(plot2_poiss)
+
+# Creating final plot
+plotfinal_poiss <- ggplot(data = plot2_poiss, 
+                    aes(x = n, y = R2conditional_poiss)) +
+  geom_point() +
+  labs(x = '')
+
+# Creating dashboard to go underneath plot
+dashboard_poiss <- plot2_poiss %>% 
+  gather(Bigdecision, Decision, -R2conditional_poiss, -n) %>%
+  filter(Decision != 'NA')
+
+rm(plot2_poiss)
+
+# Creating levels in Bigdecision variable that correspond to data in covariate_grid rows
+
+dashboard_poiss$Bigdecision <- factor(dashboard$Bigdecision, 
+                                levels = names(covariate_grid))
+
+
+dashboardfinal_poiss <- ggplot(data = dashboard_poiss,
+                         aes(x = n, y = Decision, colour = Bigdecision)) +
+  facet_grid(Bigdecision ~ ., scales = "free", space = "free", drop = ) +
+  geom_point(aes(colour = Bigdecision), shape = 108, size = 1) +
+  labs(x = 'specification number') +
+  theme_minimal() +
+  theme(legend.position = "none",
+        strip.text.x = element_blank(),
+        strip.text.y = element_blank(),
+        strip.background = element_blank())
+
+library(patchwork)
+plotfinal_poiss
+plotfinal_poiss / dashboardfinal_poiss
