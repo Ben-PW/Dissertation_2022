@@ -264,7 +264,7 @@ write.csv(redcard, here('Data', 'redcard_resampled.csv'))
 
 
 ############################################# Data re-import ####################################
-library(here)
+
 redcard <- read.csv(here('Data', 'CrowdstormingDataJuly1st.csv'), stringsAsFactors = FALSE)
 
 # Create identifying variable for data screening
@@ -318,7 +318,7 @@ for(i in 1:nrow(covariate_grid)) {
   
   # each row of covariate_grid is now used as a formula for the regression
   output_poiss <- glmer(data = redcard,
-                  formula = paste('redCards ~ avrate +',
+                  formula = paste('cards ~ avrate +',
                                   covariate_grid[i, 'formula'], 
                                   '+ (1 | playerShort) + (1 | refNum)'),
                   family = poisson(link="log"),
@@ -331,16 +331,35 @@ for(i in 1:nrow(covariate_grid)) {
   tic("Data extraction")
   
   # Getting overall model fit for each row of covariate_grid
-  R2conditional_poiss[i] <- modelsummary::get_gof(output)$r2.conditional
+  R2conditional_poiss[i] <- as.data.frame(performance::model_performance(output_poiss, metrics = 'R2'))
   
   # Getting individual predictor R2 for each row of covariate_grid
-  predictorR2_poiss[i] <- as.data.frame(summary(output)$coefficients[,1])
+  predictorR2_poiss[i] <- as.data.frame(summary(output_poiss)$coefficients[,1])
   
   toc()
   toc()
 }
 
-############ Turning list of R2 values into a data frame
+################################################### Creating Data Frames ############################################
+
+############ Turning list of R2 cond/marginal values into a data frame
+# find length of each element of predictor_R2 list
+len <- sapply(R2conditional_poiss, length)
+
+# longest length dictates number of rows in data frame
+n <- max(len)
+
+# finds number of NAs required for each row to be of same length to longest
+len <- n - len
+
+# mapply(function(x,y) c( x , rep( NA , y )), predictorR2, len)
+# above line does similar to below but long format
+
+# magically creates a data frame don't ask me how
+R2_df_poiss <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), R2conditional_poiss, len)))
+
+
+############ Turning list of predictor R2 values into a data frame
 # find length of each element of predictor_R2 list
 len <- sapply(predictorR2_poiss, length)
 
