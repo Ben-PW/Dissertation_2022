@@ -91,7 +91,7 @@ library(ROSE)
 
 # Perform over and undersampling to obtain balanced cases
 redcard.resample <- ovun.sample(redCards~., data = redcard, method = "both", 
-                                p = 0.5, N = 30000, seed = 777)
+                                p = 0.5, N = 2000, seed = 777)
 redcard <- redcard.resample$data
 # Retrieved 30,000 observations with redCards = 0/1 ratio being roughly 1:1
 
@@ -142,6 +142,7 @@ output <- list()
 
 # Defining a new variables - NA for now as they will be filled once the loop is run
 R2conditional <- NA
+R2marginal <- NA
 predictorR2 <- NA
 
 require(lme4)
@@ -175,12 +176,17 @@ for(i in 1:nrow(covariate_grid)) {
   # Getting overall model fit for each row of covariate_grid
   R2conditional[i] <- modelsummary::get_gof(output)$r2.conditional
   
+  # Getting marginal R2 for each row
+  R2marginal[i] <- modelsummary::get_gof(output)$r2.marginal
+  
   # Getting individual predictor R2 for each row of covariate_grid
   predictorR2[i] <- as.data.frame(summary(output)$coefficients[,1])
   
   toc()
   toc()
 }
+
+################################################# Visualising #######################################
 
 ############ Turning list of R2 values into a data frame
 # find length of each element of predictor_R2 list
@@ -202,9 +208,11 @@ R2_df <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2, len)))
 
 # Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
 length(R2conditional) <- nrow(covariate_grid)
+length(R2marginal) <- nrow(covariate_grid)
 
 output_table <- data.frame(covariates = covariate_grid,
-                           R2 = R2conditional)
+                           R2c = R2conditional,
+                           R2m = R2marginal)
 
 # Remove output variable as it is large and no longer needed
 rm(output)
