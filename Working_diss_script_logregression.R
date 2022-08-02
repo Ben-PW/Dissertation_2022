@@ -186,7 +186,7 @@ for(i in 1:nrow(covariate_grid)) {
   toc()
 }
 
-################################################# Visualising #######################################
+################################################# Visualising ##########################################
 
 ############ Turning list of R2 values into a data frame
 # find length of each element of predictor_R2 list
