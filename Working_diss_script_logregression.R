@@ -12,10 +12,8 @@ redcard <- na.omit(redcard)
 redcard$avrate <- redcard$rater1 + ((redcard$rater2 - redcard$rater1) / 2)
 
 # Collapsing redCards = 2 into redCards = 1 to create a binary DV:
-summary(as.factor(redcard$redCards))
 redcard["redCards"][redcard["redCards"] == 2] <- 1
-
-#summary(as.factor(redcard$redCards))
+summary(as.factor(redcard$redCards))
 
 
 ############################################# Data transformations ####################################
@@ -23,11 +21,9 @@ redcard["redCards"][redcard["redCards"] == 2] <- 1
 # 1. Collapsing IV levels >= 2 into binary values (0,1):
 redcard["yellowCards"][redcard["yellowCards"] >= 2] <- 1
 summary(as.factor(redcard$yellowCards))
-#redcard$yellowCards <- as.factor(redcard$yellowCards)
 
 redcard["yellowReds"][redcard["yellowReds"] >= 2] <- 1
 summary(as.factor(redcard$yellowReds))
-#redcard$yellowReds <- as.factor(redcard$yellowReds)
 
 # 2. refCountry needs to be recoded as a factor as well
 redcard$refCountry <- as.factor(redcard$refCountry)
@@ -39,15 +35,7 @@ season_date <- as.Date('2013-01-01')
 redcard$age <- as.numeric((season_date-redcard$birthday)/365)
 rm(season_date)
 
-# 4. creating alternative DV which covers likelihood of any kind of penalisation
-redcard$cards <- redcard$yellowCards + redcard$yellowReds + redcard$redCards
-summary(as.factor(redcard$cards))
-
-# all types of cards are recoded to 1, solves illogical values
-redcard$cards <- ifelse(redcard$cards > 1, 1, redcard$cards)
-redcard$cards <- as.factor(redcard$cards)
-
-# 5. collapse position variable in same manner to team 28 (hopefully reduce vector length)
+# 4. collapse position variable in same manner to team 28 (hopefully reduce vector length)
 library(forcats)
 
 # Leaves with four categories, Goalkeeper, Back, Middle, Front
@@ -86,18 +74,6 @@ redcard$yellowCards <- as.factor(redcard$yellowCards)
 redcard$yellowReds <- ifelse(redcard$yellowReds > 1, 1, redcard$yellowReds)
 redcard$yellowReds <- as.factor(redcard$yellowReds)
 
-############################################# Data resampling ####################################
-library(ROSE)
-
-# Perform over and undersampling to obtain balanced cases
-redcard.resample <- ovun.sample(redCards~., data = redcard, method = "both", 
-                                p = 0.5, N = 2000, seed = 777)
-redcard <- redcard.resample$data
-# Retrieved 30,000 observations with redCards = 0/1 ratio being roughly 1:1
-
-rm(redcard.resample)
-# Drop arbitrary objects
-
 ######################################### Beginning Multiverse Analysis ################################
 library(tidyverse)
 # Create list of potential covariates 
@@ -113,9 +89,6 @@ covariates_list <- list(position = c(NA, 'position'),
                         games = c(NA, 'games'),
                         refCountry = c(NA, 'refCountry'),
                         victories = c(NA, 'victories'))
-                        
-
-
 
 ############# Create list of all possible combinations
 
@@ -285,7 +258,9 @@ redcard <- na.omit(redcard)
 # Take average of rater scores for player skin tone
 redcard$avrate <- redcard$rater1 + ((redcard$rater2 - redcard$rater1) / 2)
 
-########################################### transformations ##########################################
+########################################### Transformations ##########################################
+library(tidyverse)
+
 # refCountry recoded as a factor 
 redcard$refCountry <- as.factor(redcard$refCountry)
 
@@ -295,9 +270,10 @@ season_date <- as.Date('2013-01-01')
 redcard$age <- as.numeric((season_date-redcard$birthday)/365)
 rm(season_date)
 
-# creating alternative DV which covers likelihood of any kind of penalisation
-redcard$cards <- redcard$yellowCards + redcard$yellowReds + redcard$redCards
-summary(as.factor(redcard$cards))
+# Creating an alternative DV which covers likelihood of any kind of penalisation
+# Weighting applied for yellowCards and yellowReds (1 = 0.5), not redCards (1 = 1)
+redcard <- redcard %>% mutate(allcards = ((yellowCards + yellowReds) * 0.5) + redCards)
+summary(as.factor(redcard$allcards))
 
 
 ######################################### Second multiverse loop ##########################################
@@ -327,7 +303,7 @@ for(i in 1:nrow(covariate_grid)) {
   
   # each row of covariate_grid is now used as a formula for the regression
   output_poiss <- glmer(data = redcard,
-                  formula = paste('cards ~ avrate +',
+                  formula = paste('allcards ~ avrate +',
                                   covariate_grid[i, 'formula'], 
                                   '+ (1 | playerShort) + (1 | refNum)'),
                   family = poisson(link="log"),
