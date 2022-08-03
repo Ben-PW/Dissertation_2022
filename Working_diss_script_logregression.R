@@ -336,9 +336,10 @@ for(i in 1:nrow(covariate_grid2)) {
                                   covariate_grid2[i, 'formula'], 
                                   '+ (1 | playerShort) + (1 | refNum)'),
                   #interval = log(th) + c(-3, 3),
-                  nb.control = null
+                  #nb.control = NULL,
                   #control = glmerControl(optimizer = "bobyqa"),
                   #nAGQ = 0)
+                  verbose = TRUE
   )
   toc()
   
