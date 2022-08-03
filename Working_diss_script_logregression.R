@@ -77,7 +77,8 @@ redcard$yellowReds <- as.factor(redcard$yellowReds)
 ######################################### Beginning Multiverse Analysis ################################
 library(tidyverse)
 # Create list of potential covariates 
-covariates_list <- list(position = c(NA, 'position'),
+covariates_list <- list(avrate = c(NA, 'avrate'),
+                        position = c(NA, 'position'),
                         yellowCards = c(NA, 'yellowCards'),
                         height = c(NA, 'height'),
                         weight = c(NA, 'weight'),
@@ -96,15 +97,11 @@ covariates_list <- list(position = c(NA, 'position'),
 # of every possible combination of the selected covariates
 covariates_list <- expand.grid(covariates_list) 
 
-
-# First row was two NA values so it was deleted (undone because it gives baseline avrate score)
-#covariate_grid <- covariate_grid[-1,]
-
-covariate_grid <- covariates_list %>%
-  tidyr::unite(formula, position:victories, sep = '+', na.rm = TRUE)
-# in the above code, covariate_grid was changed so that all the covariates were listed in a single
+# covariate_grid was changed so that all the covariates were listed in a single
 # column labelled 'formula', where each covariate was separated by a '+' to allow for inclusion in a 
 # regression equation
+covariate_grid <- covariates_list %>%
+  tidyr::unite(formula, avrate:victories, sep = '+', na.rm = TRUE)
 
 ######################################### Main multiverse loop ##########################################
 
@@ -134,7 +131,7 @@ for(i in 1:nrow(covariate_grid)) {
   
   # each row of covariate_grid is now used as a formula for the regression
   output <- glmer(data = redcard,
-                    formula = paste('redCards ~ avrate +',
+                    formula = paste('redCards ~ ',
                                     covariate_grid[i, 'formula'], 
                                     '+ (1 | playerShort) + (1 | refNum)'),
                     family = binomial(link="logit"),
@@ -272,11 +269,42 @@ rm(season_date)
 
 # Creating an alternative DV which covers likelihood of any kind of penalisation
 # Weighting applied for yellowCards and yellowReds (1 = 0.5), not redCards (1 = 1)
-redcard <- redcard %>% mutate(allcards = ((yellowCards + yellowReds) * 0.5) + redCards)
+redcard <- redcard %>% mutate(allcards = (yellowCards + yellowReds + (redCards * 2)))
 summary(as.factor(redcard$allcards))
+
+library(tidyverse)
+# Create list of potential covariates 
+covariates_list2 <- list(position = c(NA, 'position'),
+                        yellowCards = c(NA, 'yellowCards'),
+                        height = c(NA, 'height'),
+                        weight = c(NA, 'weight'),
+                        club = c(NA, 'club'),
+                        goals = c(NA, 'goals'),
+                        age = c(NA, 'age'),
+                        meanIAT = c(NA, 'meanIAT'),
+                        meanEXP = c(NA, 'meanExp'),
+                        games = c(NA, 'games'),
+                        refCountry = c(NA, 'refCountry'),
+                        victories = c(NA, 'victories'))
+
+############# Create list of all possible combinations
+
+# Making a grid combining the NA and other values. This then outputs a list
+# of every possible combination of the selected covariates
+covariates_list2 <- expand.grid(covariates_list2) 
+
+# covariate_grid was changed so that all the covariates were listed in a single
+# column labelled 'formula', where each covariate was separated by a '+' to allow for inclusion in a 
+# regression equation
+covariate_grid2 <- covariates_list2 %>%
+  tidyr::unite(formula, position:victories, sep = '+', na.rm = TRUE)
+
 
 
 ######################################### Second multiverse loop ##########################################
+
+######### This distribution is overdispersed, switch to negative binomial poisson regression
+
 
 # Define new variable 'output' as a list. This is to allow the loop to store multiple outputs 
 # instead of just overwriting them
@@ -287,11 +315,12 @@ output_poiss <- list()
 R2conditional_poiss <- NA
 predictorR2_poiss <- NA
 
+require(MASS)
 require(lme4)
 require(lmerTest)
 require(tictoc)
 
-for(i in 1:nrow(covariate_grid)) {
+for(i in 1:nrow(covariate_grid2)) {
   # printing [i] just to track progress of analysis
   print(i)
   
@@ -302,14 +331,15 @@ for(i in 1:nrow(covariate_grid)) {
   tic("Regression")
   
   # each row of covariate_grid is now used as a formula for the regression
-  output_poiss <- glmer(data = redcard,
+  output_poiss <- glmer.nb(data = redcard,
                   formula = paste('allcards ~ avrate +',
-                                  covariate_grid[i, 'formula'], 
+                                  covariate_grid2[i, 'formula'], 
                                   '+ (1 | playerShort) + (1 | refNum)'),
-                  family = poisson(link="log"),
-                  control = glmerControl(optimizer = "bobyqa"),
-                  nAGQ = 0)
-  
+                  #interval = log(th) + c(-3, 3),
+                  nb.control = null
+                  #control = glmerControl(optimizer = "bobyqa"),
+                  #nAGQ = 0)
+  )
   toc()
   
   # see how long data extraction is taking
@@ -324,6 +354,20 @@ for(i in 1:nrow(covariate_grid)) {
   toc()
   toc()
 }
+
+# Testing for overdispersion in poisson model manually
+overdisp_fun <- function(model) {
+  rdf <- df.residual(model)
+  rp <- residuals(model,type="pearson")
+  Pearson.chisq <- sum(rp^2)
+  prat <- Pearson.chisq/rdf
+  pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+  c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+
+overdisp_fun(model = output_poiss)
+
+
 
 ################################################### Creating Data Frames ############################################
 
@@ -363,9 +407,9 @@ predR2_df_poiss <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictor
 #################### Turning conditional R2 values into data frame
 
 # Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
-length(R2conditional_poiss) <- nrow(covariate_grid)
+length(R2conditional_poiss) <- nrow(covariate_grid2)
 
-output_table_poiss <- data.frame(covariates = covariate_grid,
+output_table_poiss <- data.frame(covariates = covariate_grid2,
                            R2 = R2conditional_poiss)
 
 # Remove output variable as it is large and no longer needed
@@ -373,7 +417,7 @@ rm(output)
 
 ######################################### Creating plot of results #####################################
 
-plot_poiss <- cbind(covariate_grid, R2conditional_poiss) 
+plot_poiss <- cbind(covariate_grid2, R2conditional_poiss) 
 
 # Order results of plot by R2 value
 plot2_poiss <- plot[order(plot$R2conditional_poiss), ]
@@ -398,7 +442,7 @@ rm(plot2_poiss)
 # Creating levels in Bigdecision variable that correspond to data in covariate_grid rows
 
 dashboard_poiss$Bigdecision <- factor(dashboard$Bigdecision, 
-                                levels = names(covariate_grid))
+                                levels = names(covariate_grid2))
 
 
 dashboardfinal_poiss <- ggplot(data = dashboard_poiss,
