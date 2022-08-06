@@ -2,11 +2,11 @@
 library(here)
 redcard <- read.csv(here('Data', 'CrowdstormingDataJuly1st.csv'), stringsAsFactors = FALSE)
 
-# Create identifying variable for data screening
-redcard$rownumber <- 1:nrow(redcard)
-
 # Remove NA values
 redcard <- na.omit(redcard)
+
+# Create identifying variable for data screening
+redcard$rownumber <- 1:nrow(redcard)
 
 # Take average of rater scores for player skin tone
 redcard$avrate <- redcard$rater1 + ((redcard$rater2 - redcard$rater1) / 2)
@@ -18,24 +18,24 @@ summary(as.factor(redcard$redCards))
 
 ############################################# Data transformations ####################################
 
-# 1. Collapsing IV levels >= 2 into binary values (0,1):
-redcard["yellowCards"][redcard["yellowCards"] >= 2] <- 1
-summary(as.factor(redcard$yellowCards))
+# Collapsing IV levels >= 2 into binary values (0,1):
+#redcard["yellowCards"][redcard["yellowCards"] >= 2] <- 1
+#summary(as.factor(redcard$yellowCards))
 
-redcard["yellowReds"][redcard["yellowReds"] >= 2] <- 1
-summary(as.factor(redcard$yellowReds))
+#redcard["yellowReds"][redcard["yellowReds"] >= 2] <- 1
+#summary(as.factor(redcard$yellowReds))
 
-# 2. refCountry needs to be recoded as a factor as well
+# 1. refCountry needs to be recoded as a factor as well
 redcard$refCountry <- as.factor(redcard$refCountry)
 
-# 3. age variable needs to be calculated
+# 2. age variable needs to be calculated
 # numerical value for age will be calculated for ease of regression in same manner to team 11
 redcard$birthday <- as.Date(redcard$birthday, '%d.%m.%Y')
 season_date <- as.Date('2013-01-01')
 redcard$age <- as.numeric((season_date-redcard$birthday)/365)
 rm(season_date)
 
-# 4. collapse position variable in same manner to team 28 (hopefully reduce vector length)
+# 3. collapse position variable in same manner to team 28 (hopefully reduce vector length)
 library(forcats)
 
 # Leaves with four categories, Goalkeeper, Back, Middle, Front
@@ -52,10 +52,11 @@ redcard$position <-
              "Middle" = "Defensive Midfielder",
              "Front" = "Left Winger",
              "Front" = "Right Winger",
-             "Front" = "Center Forward" )
+             "Front" = "Center Forward",
+             "Goalkeeper" = "Goalkeeper")
+
 # Getting a warming: Unknown levels in `f`: Center Fullback
-# Might be worh mentioning other positions (Golakeeper) just for the sake
-# of clarity
+
 
 # Specifying 'Back' as reference category
 #### NB for some reason doing this makes the log regression angry
@@ -66,7 +67,7 @@ redcard$position <-
 redcard$position <- as.factor(redcard$position)
 redcard$refCountry <- as.factor(redcard$refCountry)
 
-# 8. Removing illogical values from yellowCards and yellowReds
+# 4. Removing illogical values from yellowCards and yellowReds
 
 redcard$yellowCards <- ifelse(redcard$yellowCards > 1, 1, redcard$yellowCards)
 redcard$yellowCards <- as.factor(redcard$yellowCards)
@@ -83,14 +84,15 @@ covariates_list <- list(avrate = c(NA, 'avrate'),
                         height = c(NA, 'height'),
                         weight = c(NA, 'weight'),
                         club = c(NA, 'club'),
-                        goals = c(NA, 'goals'),
+                        goals = c(NA, 'goals'), #TBD
                         age = c(NA, 'age'),
                         meanIAT = c(NA, 'meanIAT'),
                         meanEXP = c(NA, 'meanExp'),
-                        games = c(NA, 'games'),
+                        games = c(NA, 'games'), #TBD
                         refCountry = c(NA, 'refCountry'),
                         victories = c(NA, 'victories'))
 
+# Variables such as 'goals' and 'games' should be discussed as possible colliders
 ############# Create list of all possible combinations
 
 # Making a grid combining the NA and other values. This then outputs a list
