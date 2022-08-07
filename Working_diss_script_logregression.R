@@ -115,6 +115,7 @@ output <- list()
 R2conditional <- NA
 R2marginal <- NA
 predictorR2 <- NA
+predictorPval <- NA
 
 require(lme4)
 require(lmerTest)
@@ -153,27 +154,34 @@ for(i in 1:nrow(covariate_grid)) {
   # Getting individual predictor R2 for each row of covariate_grid
   predictorR2[i] <- as.data.frame(summary(output)$coefficients[,1])
   
+  # Getting p values for individual predictors
+  predictorPval[i] <- as.data.frame(summary(output)$coefficients[,4])
+  
   toc()
   toc()
 }
 
 ################################################# Visualising ##########################################
 
-############ Turning list of R2 values into a data frame
+############ Turning list of predictor R2 and P values into a data frame
 # find length of each element of predictor_R2 list
 len <- sapply(predictorR2, length)
+len2 <- sapply(predictorPval, length)
 
 # longest length dictates number of rows in data frame
 n <- max(len)
+n2 <- max(len2)
 
 # finds number of NAs required for each row to be of same length to longest
 len <- n - len
+len2 <- n2 - len2
 
 # mapply(function(x,y) c( x , rep( NA , y )), predictorR2, len)
 # above line does similar to below but long format
 
 # magically creates a data frame don't ask me how
-R2_df <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2, len)))
+predR2_df_2 <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2, len)))
+predPval_df_2 <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorPval, len2)))
 
 #################### Turning conditional R2 values into data frame
 
@@ -182,8 +190,12 @@ length(R2conditional) <- nrow(covariate_grid)
 length(R2marginal) <- nrow(covariate_grid)
 
 output_table <- data.frame(covariates = covariate_grid,
-                           R2c = R2conditional,
-                           R2m = R2marginal)
+                             R2c = R2conditional,
+                             R2m = R2marginal)
+
+output_table$avrateR2 <- predPval_df$X2
+output_table$pvalue <- predPval_df$X2
+
 
 # Remove output variable as it is large and no longer needed
 rm(output)
@@ -293,7 +305,6 @@ redcard$position <-
 library(tidyverse)
 # Create list of potential covariates 
 covariates_list_2 <- list(position = c(NA, 'position'),
-                        yellowCards = c(NA, 'yellowCards'),
                         height = c(NA, 'height'),
                         weight = c(NA, 'weight'),
                         club = c(NA, 'club'),
@@ -329,6 +340,8 @@ output_2 <- list()
 # Defining a new variables - NA for now as they will be filled once the loop is run
 R2conditional_2 <- NA
 predictorR2_2 <- NA
+R2marginal_2 <- NA
+predictorPval_2 <- NA
 
 require(MASS)
 require(lme4)
@@ -347,7 +360,7 @@ for(i in 1:nrow(covariate_grid_2)) {
   
   # each row of covariate_grid is now used as a formula for the regression
   output_2 <- glmer(data = redcard,
-                  formula = paste('allcards ~ ',
+                  formula = paste('allcards ~ avrate +',
                                   covariate_grid_2[i, 'formula'], 
                                   '+ (1 | playerShort) + (1 | refNum)'),
                   family = binomial(link="logit"),
@@ -359,10 +372,16 @@ for(i in 1:nrow(covariate_grid_2)) {
   tic("Data extraction")
   
   # Getting overall model fit for each row of covariate_grid
-  R2conditional_2[i] <- as.data.frame(performance::model_performance(output_2, metrics = 'R2'))
+  R2conditional_2[i] <- modelsummary::get_gof(output_2)$r2.conditional
+  
+  # Getting marginal R2 for each row
+  R2marginal_2[i] <- modelsummary::get_gof(output_2)$r2.marginal
   
   # Getting individual predictor R2 for each row of covariate_grid
   predictorR2_2[i] <- as.data.frame(summary(output_2)$coefficients[,1])
+  
+  # Getting p values for individual predictors
+  predictorPval_2[i] <- as.data.frame(summary(output_2)$coefficients[,4])
   
   toc()
   toc()
@@ -370,46 +389,40 @@ for(i in 1:nrow(covariate_grid_2)) {
 
 ################################################### Creating Data Frames ############################################
 
-############ Turning list of R2 cond/marginal values into a data frame
-# find length of each element of predictor_R2 list
-len <- sapply(R2conditional_2, length)
 
-# longest length dictates number of rows in data frame
-n <- max(len)
-
-# finds number of NAs required for each row to be of same length to longest
-len <- n - len
-
-cmR2_df_2 <- data.frame(mapply(function(x,y) c( x , rep( NA , y )), R2conditional_2, len))
-# above line does similar to below but long format
-
-# magically creates a data frame don't ask me how
-#cmR2_df_2 <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), R2conditional_2, len)))
-
-
-############ Turning list of predictor R2 values into a data frame
+############ Turning list of predictor R2 and P values into a data frame
 # find length of each element of predictor_R2 list
 len <- sapply(predictorR2_2, length)
+len2 <- sapply(predictorPval_2, length)
 
 # longest length dictates number of rows in data frame
 n <- max(len)
+n2 <- max(len2)
 
 # finds number of NAs required for each row to be of same length to longest
 len <- n - len
+len2 <- n2 - len2
 
 # mapply(function(x,y) c( x , rep( NA , y )), predictorR2, len)
 # above line does similar to below but long format
 
 # magically creates a data frame don't ask me how
 predR2_df_2 <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2_2, len)))
+predPval_df_2 <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorPval_2, len2)))
 
 #################### Turning conditional R2 values into data frame
 
 # Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
 length(R2conditional_2) <- nrow(covariate_grid_2)
+length(R2marginal_2) <- nrow(covariate_grid_2)
 
 output_table_2 <- data.frame(covariates = covariate_grid_2,
-                           R2 = R2conditional_2)
+                           R2c = R2conditional_2,
+                           R2m = R2marginal_2)
+
+output_table_2$avrateR2 <- predPval_df_2$X2
+output_table_2$pvalue <- predPval_df_2$X2
+
 
 # Remove output variable as it is large and no longer needed
 rm(output)
