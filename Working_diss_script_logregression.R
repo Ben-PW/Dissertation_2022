@@ -379,8 +379,8 @@ for(i in 1:nrow(covariate_grid_2)) {
   # Getting individual predictor R2 for each row of covariate_grid
   predictorR2_2[i] <- as.data.frame(summary(output_2)$coefficients[,1])
   
-  # Getting p values for individual predictors (removed currently due to potential extraction issues)
-  #predictorPval_2[i] <- as.data.frame(summary(output_2)$coefficients[,4])
+  # Getting p values for individual predictors (check potential extraction issues)
+  predictorPval_2[i] <- as.data.frame(summary(output_2)$coefficients[,4])
   
   toc()
   toc()
@@ -433,8 +433,10 @@ output_table_2 <- data.frame(covariates = covariate_grid_2,
 
 output_table_2$rownumber <- row.names(output_table_2)
 
+########## Combining into single data frame
+
 output_table_2 <- merge(output_table_2, predR2_df_2, by = "rownumber", all = TRUE)
-#output_table_2 <- merge(output_table_2, predPval_df_2, by = "rownumber", all = TRUE)
+output_table_2 <- merge(output_table_2, predPval_df_2, by = "rownumber", all = TRUE)
 output_table_2$rownumber <- as.numeric(output_table_2$rownumber)
 # Remove output variable as it is large and no longer needed
 rm(output)
