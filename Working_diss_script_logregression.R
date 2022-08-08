@@ -92,19 +92,26 @@ covariates_list <- list(avrate = c(NA, 'avrate'),
                         victories = c(NA, 'victories'))
 
 # Variables such as 'goals' and 'games' should be discussed as possible colliders
+
+
 ############# Create list of all possible combinations
 
-# Making a grid combining the NA and other values. This then outputs a list
-# of every possible combination of the selected covariates
+# Making a grid combining the NA and other values. T
 covariates_list <- expand.grid(covariates_list) 
+
+covariates_list <- covariates_list[-1,]
+
+# re-index covariates_list after removing first row
+row.names(covariates_list) <- 1:nrow(covariates_list)
+
+# create new grouping variable
+covariates_list$rownumber <- row.names(covariates_list)
 
 # covariate_grid was changed so that all the covariates were listed in a single
 # column labelled 'formula', where each covariate was separated by a '+' to allow for inclusion in a 
 # regression equation
 covariate_grid <- covariates_list %>%
   tidyr::unite(formula, avrate:victories, sep = '+', na.rm = TRUE)
-
-covariate_grid <- covariate_grid[-1]
 
 ######################################### Main multiverse loop ##########################################
 
@@ -178,12 +185,48 @@ n2 <- max(len2)
 len <- n - len
 len2 <- n2 - len2
 
-predR2_df <- data.frame(mapply(function(x,y) c( x , rep( NA , y )), predictorR2, len))
+#predR2_df <- data.frame(mapply(function(x,y) c( x , rep( NA , y )), predictorR2, len))
 # above line does similar to below but long format
 
 # magically creates a data frame don't ask me how
 predR2_df <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2, len)))
 predPval_df <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorPval, len2)))
+
+# select only relevant columns
+predR2_df<- subset(predR2_df, select = X2)
+predPval_df <- subset(predPval_df, select = X2)
+
+# add variable to merge data frames by
+predR2_df$rownumber <- row.names(predR2_df)
+predPval_df$rownumber <- row.names(predPval_df)
+
+# rename column names for interpretability
+names(predR2_df)[1]<-paste("R2_first_covariate")
+names(predPval_df)[1]<-paste("Pval_first_covariate")
+
+#################### Turning conditional R2 values into data frame
+
+# Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
+length(R2conditional) <- nrow(covariate_grid)
+length(R2marginal) <- nrow(covariate_grid)
+
+output_table <- data.frame(covariates = covariate_grid,
+                             R2c = R2conditional,
+                             R2m = R2marginal)
+
+output_table$rownumber <- row.names(output_table)
+
+########## Combining into single data frame
+
+output_table <- merge(output_table, predR2_df, by = "rownumber", all = TRUE)
+output_table <- merge(output_table, predPval_df, by = "rownumber", all = TRUE)
+
+# Set rownumber as numeric so dataframe can be sorted by this variable
+output_table$rownumber <- as.numeric(output_table$rownumber)
+
+# Remove output variable as it is large and no longer needed
+rm(output)
+
 
 #################### Turning conditional R2 values into data frame
 
@@ -438,8 +481,12 @@ output_table_2$rownumber <- row.names(output_table_2)
 output_table_2 <- merge(output_table_2, predR2_df_2, by = "rownumber", all = TRUE)
 output_table_2 <- merge(output_table_2, predPval_df_2, by = "rownumber", all = TRUE)
 output_table_2$rownumber <- as.numeric(output_table_2$rownumber)
+
+# editing formula column for interpretability
+output_table_2$formula <- paste("avrate", output_table_2$formula, sep="+")
+
 # Remove output variable as it is large and no longer needed
-rm(output)
+rm(output_2)
 
 ######################################### Creating plot of results #####################################
 
