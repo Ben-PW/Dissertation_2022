@@ -314,6 +314,7 @@ colnames(benplot1_df)[c(1,2,3,4,5,6,7,8,9,10,11,12,13)] <- c('avrate_R2','positi
 require(dplyr)
 require(tidyr)
 
+#data needs to be transformed to pass through ggplot
 benplot1_df <- benplot1_df %>%
   pivot_longer(everything())
 
@@ -324,6 +325,9 @@ benplot1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value)) +
   theme_bw()
 
 benplot1
+
+########################################## End of Ben's plot: 1
+
 
 
 # Order results of plot by R2 value
