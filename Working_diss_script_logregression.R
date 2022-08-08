@@ -8,7 +8,11 @@ redcard <- na.omit(redcard)
 # Create identifying variable for data screening
 redcard$rownumber <- 1:nrow(redcard)
 
+
+
 ############################################# Data transformations ####################################
+
+
 
 # Take average of rater scores for player skin tone
 redcard$avrate <- redcard$rater1 + ((redcard$rater2 - redcard$rater1) / 2)
@@ -74,9 +78,15 @@ redcard$refCountry <- as.factor(redcard$refCountry)
 #redcard$yellowReds <- ifelse(redcard$yellowReds > 1, 1, redcard$yellowReds)
 #redcard$yellowReds <- as.factor(redcard$yellowReds)
 
+
+
 ######################################### Beginning Multiverse Analysis ################################
+
+
 library(tidyverse)
-# Create list of potential covariates 
+
+# Create list of potential covariates
+
 covariates_list <- list(avrate = c(NA, 'avrate'),
                         position = c(NA, 'position'),
                         yellowCards = c(NA, 'yellowCards'),
@@ -96,6 +106,7 @@ covariates_list <- list(avrate = c(NA, 'avrate'),
 
 ############# Create list of all possible combinations
 
+
 # Making a grid combining the NA and other values. T
 covariates_list <- expand.grid(covariates_list) 
 
@@ -107,16 +118,17 @@ row.names(covariates_list) <- 1:nrow(covariates_list)
 # create new grouping variable
 covariates_list$rownumber <- row.names(covariates_list)
 
-# covariate_grid was changed so that all the covariates were listed in a single
-# column labelled 'formula', where each covariate was separated by a '+' to allow for inclusion in a 
-# regression equation
+# all covariates moved to a single column, each separated by a '+' sign
 covariate_grid <- covariates_list %>%
   tidyr::unite(formula, avrate:victories, sep = '+', na.rm = TRUE)
 
+
+
 ######################################### Main multiverse loop ##########################################
 
-# Define new variable 'output' as a list. This is to allow the loop to store multiple outputs 
-# instead of just overwriting them
+
+
+# Define new variable 'output' as a list to store multiple outputs
 output <- list()
 
 
@@ -130,6 +142,7 @@ require(lme4)
 require(lmerTest)
 require(tictoc)
 
+# Begin loop
 for(i in 1:nrow(covariate_grid)) {
   # printing [i] just to track progress of analysis
   print(i)
@@ -170,9 +183,12 @@ for(i in 1:nrow(covariate_grid)) {
   toc()
 }
 
-################################################# Visualising ##########################################
+
+############################################ Creating output dataframe ##########################################
+
 
 ############ Turning list of predictor R2 and P values into a data frame
+
 # find length of each element of predictor_R2 list
 len <- sapply(predictorR2, length)
 len2 <- sapply(predictorPval, length)
@@ -204,7 +220,7 @@ predPval_df$rownumber <- row.names(predPval_df)
 names(predR2_df)[1]<-paste("R2_first_covariate")
 names(predPval_df)[1]<-paste("Pval_first_covariate")
 
-#################### Turning conditional R2 values into data frame
+############ Turning conditional R2 values into data frame
 
 # Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
 length(R2conditional) <- nrow(covariate_grid)
@@ -228,25 +244,8 @@ output_table$rownumber <- as.numeric(output_table$rownumber)
 rm(output)
 
 
-#################### Turning conditional R2 values into data frame
+############################################### Visualisation ##########################################
 
-# Pads with NA values to avoid errors in code below if whole MVA isn't performed
-length(R2conditional) <- nrow(covariate_grid)
-length(R2marginal) <- nrow(covariate_grid)
-length(predR2_df) <- nrow(covariate_grid)
-
-output_table <- data.frame(covariates = covariate_grid,
-                             R2c = R2conditional,
-                             R2m = R2marginal)
-
-output_table$avrateR2 <- predR2_df$X2
-output_table$pvalue <- predPval_df$X2
-
-
-# Remove output variable as it is large and no longer needed
-rm(output)
-
-######################################### Creating plot of results #####################################
 
 plot <- cbind(covariate_grid, R2conditional) 
 
@@ -299,6 +298,7 @@ plotfinal / dashboardfinal
 
 ############################################# Data re-import ####################################
 
+
 library(here)
 redcard <- read.csv(here('Data', 'CrowdstormingDataJuly1st.csv'), stringsAsFactors = FALSE)
 
@@ -308,7 +308,10 @@ redcard <- na.omit(redcard)
 # Create identifying variable for data screening
 redcard$rownumber <- 1:nrow(redcard)
 
+
 ########################################### Transformations ##########################################
+
+
 library(tidyverse)
 
 # Take average of rater scores for player skin tone
@@ -364,13 +367,10 @@ covariates_list_2 <- list(position = c(NA, 'position'),
 
 ############# Create list of all possible combinations
 
-# Making a grid combining the NA and other values. This then outputs a list
-# of every possible combination of the selected covariates
+# Functions same as loop 1, yellowcards not included as they are part of DV
 covariates_list_2 <- expand.grid(covariates_list_2) 
 
-# covariate_grid was changed so that all the covariates were listed in a single
-# column labelled 'formula', where each covariate was separated by a '+' to allow for inclusion in a 
-# regression equation
+
 covariate_grid_2 <- covariates_list_2 %>%
   tidyr::unite(formula, position:victories, sep = '+', na.rm = TRUE)
 
@@ -378,8 +378,8 @@ covariate_grid_2 <- covariates_list_2 %>%
 
 ######################################### Second multiverse loop ##########################################
 
-# Define new variable 'output' as a list. This is to allow the loop to store multiple outputs 
-# instead of just overwriting them
+
+# Define new variable 'output' as a list to store multiple outputs
 output_2 <- list()
 
 
@@ -389,7 +389,7 @@ predictorR2_2 <- NA
 R2marginal_2 <- NA
 predictorPval_2 <- NA
 
-
+# Begin loop
 for(i in 1:nrow(covariate_grid_2)) {
   # printing [i] just to track progress of analysis
   print(i)
@@ -429,7 +429,7 @@ for(i in 1:nrow(covariate_grid_2)) {
   toc()
 }
 
-################################################### Creating Data Frames ############################################
+############################################# Creating Data Frames ############################################
 
 
 ############ Turning list of predictor R2 and P values into a data frame
