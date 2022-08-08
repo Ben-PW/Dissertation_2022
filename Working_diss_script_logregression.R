@@ -66,13 +66,13 @@ redcard$position <-
 redcard$position <- as.factor(redcard$position)
 redcard$refCountry <- as.factor(redcard$refCountry)
 
-# 4. Removing illogical values from yellowCards and yellowReds
-
+# 4. Removing illogical values from yellowCards and yellowReds (undone as we are no longer coding yellow)
+# cards as a binary categorical predictor)
 #redcard$yellowCards <- ifelse(redcard$yellowCards > 1, 1, redcard$yellowCards)
-redcard$yellowCards <- as.factor(redcard$yellowCards)
+#redcard$yellowCards <- as.factor(redcard$yellowCards)
 
 #redcard$yellowReds <- ifelse(redcard$yellowReds > 1, 1, redcard$yellowReds)
-redcard$yellowReds <- as.factor(redcard$yellowReds)
+#redcard$yellowReds <- as.factor(redcard$yellowReds)
 
 ######################################### Beginning Multiverse Analysis ################################
 library(tidyverse)
@@ -103,6 +103,8 @@ covariates_list <- expand.grid(covariates_list)
 # regression equation
 covariate_grid <- covariates_list %>%
   tidyr::unite(formula, avrate:victories, sep = '+', na.rm = TRUE)
+
+covariate_grid <- covariate_grid[-1]
 
 ######################################### Main multiverse loop ##########################################
 
@@ -176,24 +178,25 @@ n2 <- max(len2)
 len <- n - len
 len2 <- n2 - len2
 
-# mapply(function(x,y) c( x , rep( NA , y )), predictorR2, len)
+predR2_df <- data.frame(mapply(function(x,y) c( x , rep( NA , y )), predictorR2, len))
 # above line does similar to below but long format
 
 # magically creates a data frame don't ask me how
-predR2_df_2 <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2, len)))
-predPval_df_2 <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorPval, len2)))
+predR2_df <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2, len)))
+predPval_df <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorPval, len2)))
 
 #################### Turning conditional R2 values into data frame
 
-# Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
+# Pads with NA values to avoid errors in code below if whole MVA isn't performed
 length(R2conditional) <- nrow(covariate_grid)
 length(R2marginal) <- nrow(covariate_grid)
+length(predR2_df) <- nrow(covariate_grid)
 
 output_table <- data.frame(covariates = covariate_grid,
                              R2c = R2conditional,
                              R2m = R2marginal)
 
-output_table$avrateR2 <- predPval_df$X2
+output_table$avrateR2 <- predR2_df$X2
 output_table$pvalue <- predPval_df$X2
 
 
@@ -277,7 +280,7 @@ season_date <- as.Date('2013-01-01')
 redcard$age <- as.numeric((season_date-redcard$birthday)/365)
 rm(season_date)
 
-# Creating an alternative DV which covers all combinations of possible penalisation
+# Creating an alternative DV which covers all combinations of possible penalisations
 redcard <- redcard %>% mutate(allcards = yellowCards + yellowReds + redCards)
 redcard["allcards"][redcard["allcards"] > 1] <- 1
 summary(as.factor(redcard$allcards))
@@ -343,10 +346,6 @@ predictorR2_2 <- NA
 R2marginal_2 <- NA
 predictorPval_2 <- NA
 
-require(MASS)
-require(lme4)
-require(lmerTest)
-require(tictoc)
 
 for(i in 1:nrow(covariate_grid_2)) {
   # printing [i] just to track progress of analysis
@@ -410,6 +409,16 @@ len2 <- n2 - len2
 predR2_df_2 <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2_2, len)))
 predPval_df_2 <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorPval_2, len2)))
 
+# select only relevant columns
+predR2_df_2 <- subset(predR2_df_2, select = X2)
+predPval_df_2 <- subset(predPval_df_2, select = X2)
+
+# add variable to merge data frames by
+predR2_df_2$rownumber <- row.names(predR2_df_2)
+predPval_df_2$rownumber <- row.names(predPval_df_2)
+
+# merge into data frame of predictor R2 and associated p values
+R2andPval_2 <- merge(predR2_df_2, predPval_df_2, by = "rownumber", all = TRUE)
 #################### Turning conditional R2 values into data frame
 
 # Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
@@ -420,7 +429,7 @@ output_table_2 <- data.frame(covariates = covariate_grid_2,
                            R2c = R2conditional_2,
                            R2m = R2marginal_2)
 
-output_table_2$avrateR2 <- predPval_df_2$X2
+output_table_2$avrateR2 <- predR2_df_2
 output_table_2$pvalue <- predPval_df_2$X2
 
 
