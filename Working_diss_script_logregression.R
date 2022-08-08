@@ -379,8 +379,8 @@ for(i in 1:nrow(covariate_grid_2)) {
   # Getting individual predictor R2 for each row of covariate_grid
   predictorR2_2[i] <- as.data.frame(summary(output_2)$coefficients[,1])
   
-  # Getting p values for individual predictors
-  predictorPval_2[i] <- as.data.frame(summary(output_2)$coefficients[,4])
+  # Getting p values for individual predictors (removed currently due to potential extraction issues)
+  #predictorPval_2[i] <- as.data.frame(summary(output_2)$coefficients[,4])
   
   toc()
   toc()
@@ -417,8 +417,10 @@ predPval_df_2 <- subset(predPval_df_2, select = X2)
 predR2_df_2$rownumber <- row.names(predR2_df_2)
 predPval_df_2$rownumber <- row.names(predPval_df_2)
 
-# merge into data frame of predictor R2 and associated p values
-R2andPval_2 <- merge(predR2_df_2, predPval_df_2, by = "rownumber", all = TRUE)
+# rename column names for interpretability
+names(predR2_df_2)[1]<-paste("R2_avrate")
+names(predPval_df_2)[1]<-paste("Pval_avrate")
+
 #################### Turning conditional R2 values into data frame
 
 # Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
@@ -429,10 +431,11 @@ output_table_2 <- data.frame(covariates = covariate_grid_2,
                            R2c = R2conditional_2,
                            R2m = R2marginal_2)
 
-output_table_2$avrateR2 <- predR2_df_2
-output_table_2$pvalue <- predPval_df_2$X2
+output_table_2$rownumber <- row.names(output_table_2)
 
-
+output_table_2 <- merge(output_table_2, predR2_df_2, by = "rownumber", all = TRUE)
+#output_table_2 <- merge(output_table_2, predPval_df_2, by = "rownumber", all = TRUE)
+output_table_2$rownumber <- as.numeric(output_table_2$rownumber)
 # Remove output variable as it is large and no longer needed
 rm(output)
 
