@@ -208,6 +208,8 @@ len2 <- n2 - len2
 predR2_df <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2, len)))
 predPval_df <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorPval, len2)))
 
+rm(len, len2, n, n2)
+
 # select only relevant columns
 predR2_df<- subset(predR2_df, select = X2)
 predPval_df <- subset(predPval_df, select = X2)
@@ -240,8 +242,12 @@ output_table <- merge(output_table, predPval_df, by = "rownumber", all = TRUE)
 # Set rownumber as numeric so dataframe can be sorted by this variable
 output_table$rownumber <- as.numeric(output_table$rownumber)
 
-# Remove output variable as it is large and no longer needed
-rm(output)
+# order and re-index data frame so rownames and rownumbers align
+outtable1 <- output_table[order(output_table$rownumber),]
+row.names(outtable1) <- 1:nrow(outtable1)
+
+# Tidy up
+rm(predictorPval, predPval_df, predictorR2, predR2_df, output_table, R2marginal)
 
 
 ############################################### Visualisation ##########################################
@@ -452,6 +458,7 @@ len2 <- n2 - len2
 predR2_df_2 <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorR2_2, len)))
 predPval_df_2 <- data.frame(t(mapply(function(x,y) c(x, rep(NA, y)), predictorPval_2, len2)))
 
+rm(len, len2, n, n2)
 # select only relevant columns
 predR2_df_2 <- subset(predR2_df_2, select = X2)
 predPval_df_2 <- subset(predPval_df_2, select = X2)
@@ -485,8 +492,12 @@ output_table_2$rownumber <- as.numeric(output_table_2$rownumber)
 # editing formula column for interpretability
 output_table_2$formula <- paste("avrate", output_table_2$formula, sep="+")
 
-# Remove output variable as it is large and no longer needed
-rm(output_2)
+# order and re-index data frame so rownames and rownumbers align
+outtable2 <- output_table_2[order(output_table_2$rownumber),]
+row.names(outtable2) <- 1:nrow(outtable2)
+
+# Tidy up
+rm(predictorPval_2, predPval_df_2, predictorR2_2, predR2_df_2, output_table_2, R2marginal_2, output_2)
 
 ######################################### Creating plot of results #####################################
 
