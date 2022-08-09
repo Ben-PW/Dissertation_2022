@@ -298,8 +298,6 @@ victories_set<-subset(covariates_list, (!is.na(covariates_list[,13])))
 output_victories <- subset(outtable1, rownumber %in% victories_set$rownumber)
 
 #create one dataframe of the filtered values to build the plot from
-df <- cbind(Date,longterm.df$Austria,shortterm.df$Austria)
-df <- as.data.frame(df)
 benplot1_df <- cbind(output_avrate$R2c, output_position$R2c, output_yellowCards$R2c, output_height$R2c,
                      output_weight$R2c, output_club$R2c, output_goals$R2c, output_age$R2c,
                      output_meanIAT$R2c, output_meanEXP$R2c, output_games$R2c, output_refCountry$R2c,
