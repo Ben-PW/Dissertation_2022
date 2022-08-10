@@ -482,6 +482,8 @@ for(i in 1:nrow(covariate_grid_2)) {
   # printing [i] just to track progress of analysis
   print(i)
   
+  skip_to_next <- FALSE
+  
   # see how long full loop is taking
   tic("Total")
   
