@@ -148,7 +148,6 @@ for(i in 1:nrow(covariate_grid)) {
   # printing [i] just to track progress of analysis
   print(i)
   
-  #skip_to_next is false unless errors occur, in which case it is set to true for that iteration
   skip_to_next <- FALSE
   
   # see how long full loop is taking
@@ -157,53 +156,36 @@ for(i in 1:nrow(covariate_grid)) {
   # see how long regression is taking
   tic("Regression")
   
-  # error management function - errors will be skipped instead of having to restart loop
-  tryCatch(
      # each row of covariate_grid is now used as a formula for the regression
-     output <- glmer(data = redcard,
+     output <- tryCatch(glmer(data = redcard,
                     formula = paste('redCards ~ ',
                                     covariate_grid[i, 'formula'], 
                                     '+ (1 | playerShort) + (1 | refNum)'),
                     family = binomial(link="logit"),
                     control = glmerControl(optimizer = "bobyqa"),
                     nAGQ = 0),
-    
-    error = function(e){skip_to_next <<- TRUE}
-    )
-  
-  if(skip_to_next){
-    return(NA)
-    message(paste("Error performing regression for specification: ", i))
-    next
-    }
+                    
+                    error = function(e) {
+                      skip_to_next <<- TRUE
+                    })
+       
+     if(skip_to_next) { next }
+                    
      
   toc()
     
   # see how long data extraction is taking
   tic("Data extraction")
   
-  tryCatch(
-     # Getting overall model fit for each row of covariate_grid
-     R2conditional[i] <- modelsummary::get_gof(output)$r2.conditional,
-     error = function(e){skip_to_next <<- TRUE})
-  tryCatch(  
-     # Getting marginal R2 for each row
-     R2marginal[i] <- modelsummary::get_gof(output)$r2.marginal,
-     error = function(e){skip_to_next <<- TRUE})
-  tryCatch(  
-     # Getting individual predictor R2 for each row of covariate_grid
-     predictorR2[i] <- as.data.frame(summary(output)$coefficients[,1]),
-     error = function(e){skip_to_next <<- TRUE})
-  tryCatch( 
-     # Getting p values for individual predictors
-     predictorPval[i] <- as.data.frame(summary(output)$coefficients[,4]),
-     error = function(e){skip_to_next <<- TRUE})
   
-  if(skip_to_next){
-    return(NA)
-    message(paste("Error extracting data for specification: ", i))
-    next
-    } 
+     # Getting overall model fit for each row of covariate_grid
+     R2conditional[i] <- modelsummary::get_gof(output)$r2.conditional 
+     # Getting marginal R2 for each row
+     R2marginal[i] <- modelsummary::get_gof(output)$r2.marginal 
+     # Getting individual predictor R2 for each row of covariate_grid
+     predictorR2[i] <- as.data.frame(summary(output)$coefficients[,1])
+     # Getting p values for individual predictors
+     predictorPval[i] <- as.data.frame(summary(output)$coefficients[,4])
 
   
   toc()
@@ -507,13 +489,20 @@ for(i in 1:nrow(covariate_grid_2)) {
   tic("Regression")
   
   # each row of covariate_grid is now used as a formula for the regression
-  output_2 <- glmer(data = redcard,
+  output_2 <- tryCatch(glmer(data = redcard,
                   formula = paste('allcards ~ avrate +',
                                   covariate_grid_2[i, 'formula'], 
                                   '+ (1 | playerShort) + (1 | refNum)'),
                   family = binomial(link="logit"),
                   control = glmerControl(optimizer = "bobyqa"),
-                  nAGQ = 0)
+                  nAGQ = 0),
+                  
+                  error = function(e) {
+                    skip_to_next <<- TRUE
+                  })
+  
+  if(skip_to_next) { next }
+  
   toc()
   
   # see how long data extraction is taking
