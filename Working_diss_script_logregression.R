@@ -137,11 +137,15 @@ R2conditional <- NA
 R2marginal <- NA
 predictorR2 <- NA
 predictorPval <- NA
+or.avrate <- NA
+or.lci <- NA
+or.uci <- NA
 
 require(lme4)
 require(lmerTest)
 require(tictoc)
 require(R.oo)
+require(broom.mixed)
 
 # Begin loop
 for(i in 1:nrow(covariate_grid)) {
@@ -186,6 +190,11 @@ for(i in 1:nrow(covariate_grid)) {
      predictorR2[i] <- as.data.frame(summary(output)$coefficients[,1])
      # Getting p values for individual predictors
      predictorPval[i] <- as.data.frame(summary(output)$coefficients[,4])
+     or.avrate[i] <- as.numeric(tidy(output,conf.int=TRUE,exponentiate=TRUE,effects="fixed")[2,3])
+     # Getting OR LCI
+     or.lci[i] <- as.numeric(tidy(output,conf.int=TRUE,exponentiate=TRUE,effects="fixed")[2,7])
+     # Getting OR UCI
+     or.uci[i] <- as.numeric(tidy(output,conf.int=TRUE,exponentiate=TRUE,effects="fixed")[2,8])
 
   
   toc()
@@ -233,13 +242,19 @@ names(predPval_df)[1]<-paste("Pval_first_covariate")
 
 ############ Turning conditional R2 values into data frame
 
-# Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
+# Pads R2 and OR values with NA values to avoid errors in code below if whole MVA isn't performed
 length(R2conditional) <- nrow(covariate_grid)
 length(R2marginal) <- nrow(covariate_grid)
+length(or.avrate) <- nrow(covariate_grid)
+length(or.lci) <- nrow(covariate_grid)
+length(or.uci) <- nrow(covariate_grid)
 
 output_table <- data.frame(covariates = covariate_grid,
                              R2c = R2conditional,
-                             R2m = R2marginal)
+                             R2m = R2marginal,
+                           Avrate_OR = or.avrate,
+                           Avrate_LCI = or.lci,
+                           Avrate_UCI = or.uci)
 
 output_table$rownumber <- row.names(output_table)
 
@@ -256,7 +271,7 @@ outtable1 <- output_table[order(output_table$rownumber),]
 row.names(outtable1) <- 1:nrow(outtable1)
 
 # Tidy up
-rm(predictorPval, predPval_df, predictorR2, predR2_df, output_table, R2marginal)
+rm(predictorPval, predPval_df, predictorR2, predR2_df, output_table, R2marginal, or.avrate, or.lci, or.uci)
 
 
 ############################################### Visualisation ##########################################
