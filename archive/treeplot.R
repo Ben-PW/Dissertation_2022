@@ -7,48 +7,44 @@ library(dplyr)
 
 # Create tree plot
 
-df.treeplot <- data.frame(Covariates = factor(c(outtable1$covariates.formula, 0), 
-                                              levels = c(outtable1$covariates.formula, 0)),
-                          Model_number = c(outtable1$rownumber, NA),
+df.treeplot <- data.frame(spec.number = c(outtable1$rownumber, NA),
                          OR = c(outtable1$Avrate_OR, NA),
                          Low = c(outtable1$Avrate_LCI, NA),
                          Hi = c(outtable1$Avrate_UCI, NA))
 
-df.treeplot <- arrange(df.treeplot, OR)
+# Arrange ORs according to their spec. number
+df.treeplot <- arrange(df.treeplot, spec.number)
 
-df.treeplot$Covariates <- factor(df.treeplot$Covariates,
-                          levels = c(rev(as.numeric(as.character(df.treeplot$Covariates))), 0)) #not sure what this does
+# Arrange ORs according to their size; I think we are more interested in spec. number?
+#df.treeplot <- arrange(df.treeplot, OR)
 
-# Temporarily remove NA values - until the analysis is ran completely.
-# Will disrupt the subsequent steps
-#df.treeplot <- na.omit(df.treeplot)
-
-p <- ggplot(df.treeplot, aes(OR, Covariates)) + 
-  geom_point(size = 3) +
-  geom_errorbarh(aes(xmax = Hi, xmin = Low), height = 0.5) +
-  geom_vline(xintercept = 1, linetype = "longdash") +
-  scale_x_continuous(breaks = seq(-3, 6, 1), labels = seq(-3,6,1)) +
-  geom_text(x = 5.1, y = 1, label = "*", size = 6) +
-  geom_text(x = 5.1, y = 2, label = "*", size = 6) + 
-  labs(x = "Odds Ratio", y = "") +
+or.plot <- ggplot(df.treeplot, aes(OR, spec.number)) + 
+  geom_point(size = 2) + 
+  geom_errorbarh(aes(xmax = Hi, xmin = Low), height = 0.5) + # error bars
+  geom_vline(xintercept = 1, linetype = "longdash") + # showing the OR of 1
+  scale_x_continuous(breaks = seq(-3,6, 1), labels = seq(-3,6,1)) +
+# spacing the x axis (start, stop, step)
+  labs(x = "Skintone Odds Ratio", y = "Specification Number") + # axis labels
   theme(axis.line = element_line(colour = "black"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         panel.background = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
+#        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(), # connecting lines
         plot.margin = unit(c(0,0,0,0), "lines"))
 
-p 
-#rotate graph
-# p + coord_flip() 
+# Default visualisation
+or.plot 
+
+# Rotated visualisation
+or.plot + coord_flip() 
 
 # Create label table
 
-lab <- data.frame(V0 = df.treeplot$Model_number,
+lab <- data.frame(V0 = df.treeplot$spec.number,
                   V05 = rep(c(1.9, 2, 2.5), each = nrow(df.treeplot)),
-                  V1 = c(as.character(df.treeplot$Model_number)[-30], "Model number",
+                  V1 = c(as.character(df.treeplot$spec.number)[-30], "Model number",
                          as.character(df.treeplot$Covariates)[-30], "Covariate composition",
                          format(round(df.treeplot$OR[-30], 2), nsmall = 2), "Skin tone rating OR"))
 
