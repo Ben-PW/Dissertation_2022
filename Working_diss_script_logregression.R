@@ -97,16 +97,13 @@ covariates_list <- list(avrate = c(NA, 'avrate'),
                         height = c(NA, 'height'),
                         weight = c(NA, 'weight'),
                         club = c(NA, 'club'),
-                        goals = c(NA, 'goals'), #TBD
+          #             goals = c(NA, 'goals'), #collider - taken out
                         age = c(NA, 'age'),
                         meanIAT = c(NA, 'meanIAT'),
                         meanEXP = c(NA, 'meanExp'),
-                        games = c(NA, 'games'), #TBD
+          #              games = c(NA, 'games'), #collider - taken out
                         refCountry = c(NA, 'refCountry'),
                         victories = c(NA, 'victories'))
-
-# Variables such as 'goals' and 'games' should be discussed as possible colliders
-
 
 ############# Create list of all possible combinations
 
