@@ -1,14 +1,18 @@
 ############################################# Data import ####################################
 library(here)
-redcard <- read.csv(here('Data', 'CrowdstormingDataJuly1st.csv'), stringsAsFactors = FALSE)
+library(tidyverse)
 
-# Remove NA values
-redcard <- na.omit(redcard)
+# Read the 'contaminated' df
+redcardCont <- read.csv(here('Data', 'CrowdstormingDataJuly1st.csv'), stringsAsFactors = FALSE)
 
-# Create identifying variable for data screening
-redcard$rownumber <- 1:nrow(redcard)
+# Import refs identified as brought in from players' previous game history
+contRefs <- read.csv(here('Data', 'decontRefs.csv')) %>% select(refNum)
 
+# Exclude the selected refs
+redcard <- redcardCont[!(redcardCont$refNum %in% contRefs$refNum), ]
 
+# Remove now arbitrary dfs
+rm(redcardCont, contRefs)
 
 ############################################# Data transformations ####################################
 
