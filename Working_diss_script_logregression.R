@@ -506,6 +506,9 @@ R2conditional_2 <- NA
 predictorR2_2 <- NA
 R2marginal_2 <- NA
 predictorPval_2 <- NA
+or.avrate2 <- NA
+or.lci2 <- NA
+or.uci2 <- NA
 
 # Begin loop
 for(i in 1:nrow(covariate_grid_2)) {
@@ -606,10 +609,16 @@ names(predPval_df_2)[1]<-paste("Pval_avrate")
 # Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
 length(R2conditional_2) <- nrow(covariate_grid_2)
 length(R2marginal_2) <- nrow(covariate_grid_2)
+length(or.avrate) <- nrow(covariate_grid)
+length(or.lci) <- nrow(covariate_grid)
+length(or.uci) <- nrow(covariate_grid)
 
 output_table_2 <- data.frame(covariates = covariate_grid_2,
                            R2c = R2conditional_2,
-                           R2m = R2marginal_2)
+                           R2m = R2marginal_2,
+                           Avrate_OR = or.avrate,
+                           Avrate_LCI = or.lci,
+                           Avrate_UCI = or.uci)
 
 output_table_2$rownumber <- row.names(output_table_2)
 
