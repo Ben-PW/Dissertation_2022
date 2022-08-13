@@ -17,7 +17,11 @@ rm(redcardCont, contRefs)
 
 ############################################# Data transformations ####################################
 
+# Remove NA values
+redcard <- na.omit(redcard)
 
+# Create identifying variable for data screening
+redcard$rownumber <- 1:nrow(redcard)
 
 # Take average of rater scores for player skin tone
 redcard$avrate <- redcard$rater1 + ((redcard$rater2 - redcard$rater1) / 2)
@@ -402,17 +406,26 @@ plotfinal / dashboardfinal
 
 
 ############################################# Data re-import ####################################
-
-
 library(here)
-redcard <- read.csv(here('Data', 'CrowdstormingDataJuly1st.csv'), stringsAsFactors = FALSE)
+library(tidyverse)
+
+# Read the 'contaminated' df
+redcardCont <- read.csv(here('Data', 'CrowdstormingDataJuly1st.csv'), stringsAsFactors = FALSE)
+
+# Import refs identified as brought in from players' previous game history
+contRefs <- read.csv(here('Data', 'decontRefs.csv')) %>% select(refNum)
+
+# Exclude the selected refs
+redcard <- redcardCont[!(redcardCont$refNum %in% contRefs$refNum), ]
+
+# Remove now arbitrary dfs
+rm(redcardCont, contRefs)
 
 # Remove NA values
 redcard <- na.omit(redcard)
 
 # Create identifying variable for data screening
 redcard$rownumber <- 1:nrow(redcard)
-
 
 ########################################### Transformations ##########################################
 
