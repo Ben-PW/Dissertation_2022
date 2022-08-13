@@ -552,6 +552,15 @@ for(i in 1:nrow(covariate_grid_2)) {
   # Getting p values for individual predictors (check potential extraction issues)
   predictorPval_2[i] <- as.data.frame(summary(output_2)$coefficients[,4])
   
+  # Getting ORs for avrate as a covariate in each model
+  or.avrate2[i] <- as.numeric(tidy(output,conf.int=TRUE,exponentiate=TRUE,effects="fixed")[2,3])
+  
+  # Getting OR LCI
+  or.lci2[i] <- as.numeric(tidy(output,conf.int=TRUE,exponentiate=TRUE,effects="fixed")[2,7])
+  
+  # Getting OR UCI
+  or.uci2[i] <- as.numeric(tidy(output,conf.int=TRUE,exponentiate=TRUE,effects="fixed")[2,8])
+  
   toc()
   toc()
 }
