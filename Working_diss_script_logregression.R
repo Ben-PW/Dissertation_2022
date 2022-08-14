@@ -306,38 +306,38 @@ output_weight <- subset(outtable1, rownumber %in% height_set$rownumber)
 club_set<-subset(covariates_list, (!is.na(covariates_list[,6])))
 output_club <- subset(outtable1, rownumber %in% club_set$rownumber)
 #goals
-goals_set<-subset(covariates_list, (!is.na(covariates_list[,7])))
-output_goals <- subset(outtable1, rownumber %in% goals_set$rownumber)
+#goals_set<-subset(covariates_list, (!is.na(covariates_list[,7])))
+#output_goals <- subset(outtable1, rownumber %in% goals_set$rownumber)
 #age
-age_set<-subset(covariates_list, (!is.na(covariates_list[,8])))
+age_set<-subset(covariates_list, (!is.na(covariates_list[,7])))
 output_age <- subset(outtable1, rownumber %in% age_set$rownumber)
 #meanIAT
-meanIAT_set<-subset(covariates_list, (!is.na(covariates_list[,9])))
+meanIAT_set<-subset(covariates_list, (!is.na(covariates_list[,8])))
 output_meanIAT <- subset(outtable1, rownumber %in% meanIAT_set$rownumber)
 #meanEXP
-meanEXP_set<-subset(covariates_list, (!is.na(covariates_list[,10])))
-output_meanEXP <- subset(outtable1, rownumber %in% meanEXP_set$rownumber)
+#meanEXP_set<-subset(covariates_list, (!is.na(covariates_list[,8])))
+#output_meanEXP <- subset(outtable1, rownumber %in% meanEXP_set$rownumber)
 #games
-games_set<-subset(covariates_list, (!is.na(covariates_list[,11])))
-output_games <- subset(outtable1, rownumber %in% games_set$rownumber)
+#games_set<-subset(covariates_list, (!is.na(covariates_list[,11])))
+#output_games <- subset(outtable1, rownumber %in% games_set$rownumber)
 #refCountry
-refCountry_set<-subset(covariates_list, (!is.na(covariates_list[,12])))
+refCountry_set<-subset(covariates_list, (!is.na(covariates_list[,9])))
 output_refCountry <- subset(outtable1, rownumber %in% refCountry_set$rownumber)
 #victories
-victories_set<-subset(covariates_list, (!is.na(covariates_list[,13])))
+victories_set<-subset(covariates_list, (!is.na(covariates_list[,10])))
 output_victories <- subset(outtable1, rownumber %in% victories_set$rownumber)
 
 #create one dataframe of the filtered values to build the plot from
 benplot1_df <- cbind(output_avrate$R2c, output_position$R2c, output_yellowCards$R2c, output_height$R2c,
-                     output_weight$R2c, output_club$R2c, output_goals$R2c, output_age$R2c,
-                     output_meanIAT$R2c, output_meanEXP$R2c, output_games$R2c, output_refCountry$R2c,
+                     output_weight$R2c, output_club$R2c, output_age$R2c,
+                     output_meanIAT$R2c, output_refCountry$R2c,
                      output_victories$R2c)
 
 benplot1_df <- as.data.frame(benplot1_df)
 
-colnames(benplot1_df)[c(1,2,3,4,5,6,7,8,9,10,11,12,13)] <- c('avrate_R2','position_R2','yellowCards_R2',
-                                                             'height_R2','weight_R2','club_R2','goals_R2',
-                                                             'age_R2','meanIAT_R2','meanEXP_R2','games_R2',
+colnames(benplot1_df)[c(1,2,3,4,5,6,7,8,9,10)] <- c('avrate_R2','position_R2','yellowCards_R2',
+                                                             'height_R2','weight_R2','club_R2',
+                                                             'age_R2','meanIAT_R2',
                                                              'refCountry_R2','victories_R2')
 require(dplyr)
 require(tidyr)
@@ -349,9 +349,24 @@ benplot1_df <- benplot1_df %>%
 #create plot
 require(ggplot2)
 benplot1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value)) + 
-  geom_boxplot() +
+  geom_violin(scale = 'area', 
+              width = 1.6,
+              adjust = 0.1) +
   theme_bw()
 
+benplot1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value, colour = name)) +
+  geom_dotplot(binaxis = "y", 
+               binpositions = 'bygroup', 
+               stackdir ="center",
+               stackratio = 0.1,
+               dotsize = 0.5,
+               binwidth = 1/100,
+               show.legend = FALSE) +
+  labs(y = 'Overall model R2', x = 'Common model covariate') +
+  geom_violin(show.legend = FALSE,
+              adjust = 0.1) +
+  theme_bw()
+  
 benplot1
 
 ########################################## End of Ben's plot: 1
