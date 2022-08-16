@@ -335,10 +335,10 @@ benplot1_df <- cbind(output_avrate$R2c, output_position$R2c, output_yellowCards$
 
 benplot1_df <- as.data.frame(benplot1_df)
 
-colnames(benplot1_df)[c(1,2,3,4,5,6,7,8,9,10)] <- c('avrate_R2','position_R2','yellowCards_R2',
-                                                             'height_R2','weight_R2','club_R2',
-                                                             'age_R2','meanIAT_R2',
-                                                             'refCountry_R2','victories_R2')
+colnames(benplot1_df)[c(1,2,3,4,5,6,7,8,9,10)] <- c('Skin_Tone','Position','Yellow_Cards',
+                                                             'Height','Weight','Club',
+                                                             'Age','Mean_IAT',
+                                                             'Ref_Country','Victories')
 require(dplyr)
 require(tidyr)
 
@@ -363,32 +363,36 @@ benplot1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value, colour =
                binwidth = 1/100,
                show.legend = FALSE) +
   labs(y = 'Overall model R2', x = 'Common model covariate') +
-  geom_violin(show.legend = FALSE,
-              adjust = 0.1) +
   theme_bw()
   
 benplot1
 
 ########################################## End of Ben's plot: 1
 
-
+plot <- cbind(covariate_grid$formula, outtable1$R2c)
 
 # Order results of plot by R2 value
-plot2 <- plot[order(plot$R2conditional), ]
+plot2 <- plot[order(plot[,2]), ]
 rm(plot)
+
+plot2[,2] <- as.numeric(plot2[,2])
+
+plot2 <- as.data.frame(plot2)
 
 # Creating a grouping variable (n) for each row of covariate_grid
 plot2$n <- 1:nrow(plot2)
 
+plot2$V2 <- as.numeric(plot2$V2)
+
 # Creating final plot
 plotfinal <- ggplot(data = plot2, 
-                    aes(x = n, y = R2conditional)) +
+                    aes(x = n, y = V2)) +
   geom_point() +
   labs(x = '')
 
 # Creating dashboard to go underneath plot
 dashboard <- plot2 %>% 
-  gather(Bigdecision, Decision, -R2conditional, -n) %>%
+  gather(Bigdecision, Decision, -V2, -n) %>%
   filter(Decision != 'NA')
 
 rm(plot2)
@@ -400,9 +404,9 @@ dashboard$Bigdecision <- factor(dashboard$Bigdecision,
 
 
 dashboardfinal <- ggplot(data = dashboard,
-                         aes(x = n, y = Decision, colour = Bigdecision)) +
+                         aes(x = n, y = Decision)) +
   facet_grid(Bigdecision ~ ., scales = "free", space = "free", drop = ) +
-  geom_point(aes(colour = Bigdecision), shape = 108, size = 1) +
+  geom_point(shape = 108, size = 1) +
   labs(x = 'specification number') +
   theme_minimal() +
   theme(legend.position = "none",
@@ -412,6 +416,7 @@ dashboardfinal <- ggplot(data = dashboard,
 
 library(patchwork)
 plotfinal
+dashboardfinal
 plotfinal / dashboardfinal
 
 
