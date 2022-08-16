@@ -385,10 +385,11 @@ plot_or <- ggplot(data = orplot,
                     aes(x = n, y = V1)) +
   scale_y_continuous() +
   geom_errorbar(aes(ymin = V3, ymax = V4, alpha = 0.2, colour = 'red')) +
-  geom_point() +
+  geom_point(show.legend = FALSE) +
   labs(x = '')
 
 plot_or
+
 ######################################### End of OR plot ideas
 
 plot <- cbind(covariate_grid$formula, outtable1$R2c)
