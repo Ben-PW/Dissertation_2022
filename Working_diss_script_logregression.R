@@ -369,6 +369,28 @@ benplot1
 
 ########################################## End of Ben's plot: 1
 
+########################################## Ideas for OR plot
+
+orplot <- as.data.frame(cbind(output_avrate$Avrate_OR, output_avrate$covariates.formula,
+                              output_avrate$Avrate_LCI, output_avrate$Avrate_UCI))
+
+orplot <- orplot[order(orplot[,1]),]
+
+orplot$V1 <- as.numeric(orplot$V1)
+orplot$V3 <- as.numeric(orplot$V3)
+orplot$V4 <- as.numeric(orplot$V4)
+orplot$n <- 1:nrow(orplot)
+
+plot_or <- ggplot(data = orplot, 
+                    aes(x = n, y = V1)) +
+  scale_y_continuous() +
+  geom_errorbar(aes(ymin = V3, ymax = V4, alpha = 0.2, colour = 'red')) +
+  geom_point() +
+  labs(x = '')
+
+plot_or
+######################################### End of OR plot ideas
+
 plot <- cbind(covariate_grid$formula, outtable1$R2c)
 
 # Order results of plot by R2 value
