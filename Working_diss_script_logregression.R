@@ -406,10 +406,39 @@ nocatdf <- subset(outtable1, rownumber %in% nocatset$rownumber)
 nocatdf <- nocatdf[order(nocatdf[,4]),]
 nocatdf$n <- 1:nrow(nocatdf)
 
+group <- c(1,1,1,1,1,1,1,1,
+           2,2,2,2,2,2,2,2,
+           3,3,3,3,3,3,3,3,
+           4,4,4,4,4,4,4,4,
+           5,5,5,5,5,5,5,5,
+           6,6,6,6,6,6,6,6,
+           7,7,7,7,7,7,7,8,
+           8,8,8,8,8,8,8)
+
+nocatdf$group <- group
+
+nocatdf["group"][nocatdf["group"] == 1] <- "YellowCards"
+nocatdf["group"][nocatdf["group"] == 2] <- "YellowCards + Age"
+nocatdf["group"][nocatdf["group"] == 3] <- "YellowCards + Victories"
+nocatdf["group"][nocatdf["group"] == 4] <- "YellowCards + Age + Victories"
+nocatdf["group"][nocatdf["group"] == 5] <- "Victories"
+nocatdf["group"][nocatdf["group"] == 6] <- "Age + Victories"
+nocatdf["group"][nocatdf["group"] == 7] <- "Avrate/Height/Weight"
+nocatdf["group"][nocatdf["group"] == 8] <- "Age"
+
+nocatdf$group <- factor(nocatdf$group, levels = c("Age","Avrate/Height/Weight","Age + Victories", "Victories","YellowCards + Age + Victories",
+                                                  "YellowCards + Victories","YellowCards + Age","YellowCards" 
+                                                    
+                                                  ))
+
 bigplot <- ggplot(data = nocatdf,
-                  aes(x = n, y = R2c)) +
+                  aes(x = n, y = R2c, colour = group,
+                      show.legend = TRUE)) +
+  scale_y_continuous()
   geom_point()
 bigplot
+
+################################################ End of potential alternative plot
 
 plot <- cbind(covariate_grid$formula, outtable1$R2c)
 
