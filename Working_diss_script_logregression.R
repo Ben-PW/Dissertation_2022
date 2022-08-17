@@ -739,15 +739,19 @@ rm(predictorPval_2, predPval_df_2, predictorR2_2, predR2_df_2, output_table_2, R
 
 ########################################## Ideas for OR plot 2
 
+# extract OR and confidence intervals from outtable2
 orplot2 <- as.data.frame(cbind(outtable2$Avrate_OR, outtable2$Avrate_LCI, 
                               outtable2$Avrate_UCI))
 
+#order data by OR size
 orplot2 <- orplot2[order(orplot2[,1]),]
 
+#recode all as numeric and add grouping variable
 orplot2$V1 <- as.numeric(orplot2$V1)
 orplot2$V3 <- as.numeric(orplot2$V3)
 orplot2$n <- 1:nrow(orplot2)
 
+#plot OR on y axis and grouping variable (meaningless) on x
 plot_or2 <- ggplot(data = orplot2, 
                   aes(x = n, y = V1)) +
   geom_errorbar(aes(ymin = V2, ymax = V3, alpha = 0.2, colour = 'red')) +
@@ -757,9 +761,11 @@ plot_or2 <- ggplot(data = orplot2,
 
 plot_or2
 
+#combine with plot from MVA 1
 library(patchwork)
 plot_or/plot_or2
 
+#flip 90 degrees for ease of comparison with main study
 plot_orf <- plot_or + coord_flip()
 plot_or2f <- plot_or2 + coord_flip()
 
