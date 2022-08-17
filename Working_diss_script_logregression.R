@@ -390,7 +390,26 @@ plot_or <- ggplot(data = orplot,
 
 plot_or
 
+bigplot <- ggplot(data = outtable1,
+                  aes(x = rownumber, y = R2c)) +
+  geom_point()
+bigplot
 ######################################### End of OR plot ideas
+
+############################################## Potential alternative final plot
+nocatset<-subset(covariates_list, (is.na(covariates_list[,c(2)])))
+nocatset<-subset(nocatset, (is.na(nocatset[,c(6)])))
+nocatset<-subset(nocatset, (is.na(nocatset[,c(8)])))
+nocatset<-subset(nocatset, (is.na(nocatset[,c(9)])))
+
+nocatdf <- subset(outtable1, rownumber %in% nocatset$rownumber)
+nocatdf <- nocatdf[order(nocatdf[,4]),]
+nocatdf$n <- 1:nrow(nocatdf)
+
+bigplot <- ggplot(data = nocatdf,
+                  aes(x = n, y = R2c)) +
+  geom_point()
+bigplot
 
 plot <- cbind(covariate_grid$formula, outtable1$R2c)
 
