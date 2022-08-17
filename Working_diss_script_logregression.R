@@ -394,10 +394,28 @@ plot_or <- ggplot(data = orplot,
 
 plot_or
 
-bigplot <- ggplot(data = outtable1,
-                  aes(x = rownumber, y = R2c)) +
-  geom_point()
-bigplot
+#################### Create OR plot without categorical variables
+nocatset <- subset(covariates_list, (is.na(covariates_list[,c(2)])))
+nocatset <- subset(nocatset, (is.na(nocatset[,c(6)])))
+nocatset <- subset(nocatset, (is.na(nocatset[,c(8)])))
+nocatset <- subset(nocatset, (is.na(nocatset[,c(9)])))
+nocatset <- subset(nocatset,(!is.na(nocatset[,c(1)])))
+
+ornocatdf <- subset(outtable1, rownumber %in% nocatset$rownumber)
+
+ornocatdf <- ornocatdf[order(ornocatdf[,6]),]
+ornocatdf$n <- 1:nrow(ornocatdf)
+
+plot_ornocat <- ggplot(data = ornocatdf, 
+                              aes(x = n, y = Avrate_OR)) +
+  ylim(0.75, 1.75) +
+  geom_errorbar(aes(ymin = Avrate_LCI, 
+                    ymax = Avrate_UCI, alpha = 0.2, colour = 'red')) +
+  geom_point(show.legend = FALSE) +
+  labs(x = '')
+
+plot_ornocat
+
 ######################################### End of OR plot ideas
 
 ############################################## Potential alternative final plot
@@ -763,13 +781,14 @@ plot_or2
 
 #combine with plot from MVA 1
 library(patchwork)
-plot_or/plot_or2
+plot_or/plot_ornocat/plot_or2
 
 #flip 90 degrees for ease of comparison with main study
 plot_orf <- plot_or + coord_flip()
 plot_or2f <- plot_or2 + coord_flip()
+plot_ornocatf <- plot_ornocat + coord_flip()
 
-plot_orf/plot_or2f
+plot_orf/plot_ornocatf/plot_or2f
 
 bigplot <- ggplot(data = outtable1,
                   aes(x = rownumber, y = R2c)) +
