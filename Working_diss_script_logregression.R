@@ -506,9 +506,9 @@ R2conditional_2 <- NA
 predictorR2_2 <- NA
 R2marginal_2 <- NA
 predictorPval_2 <- NA
-or.avrate2 <- NA
-or.lci2 <- NA
-or.uci2 <- NA
+or.avrate_2 <- NA
+or.lci_2 <- NA
+or.uci_2 <- NA
 
 # Begin loop
 for(i in 1:nrow(covariate_grid_2)) {
@@ -556,13 +556,13 @@ for(i in 1:nrow(covariate_grid_2)) {
   predictorPval_2[i] <- as.data.frame(summary(output_2)$coefficients[,4])
   
   # Getting ORs for avrate as a covariate in each model
-  or.avrate2[i] <- as.numeric(tidy(output,conf.int=TRUE,exponentiate=TRUE,effects="fixed")[2,3])
+  or.avrate_2[i] <- as.numeric(tidy(output_2,conf.int=TRUE,exponentiate=TRUE,effects="fixed")[2,3])
   
   # Getting OR LCI
-  or.lci2[i] <- as.numeric(tidy(output,conf.int=TRUE,exponentiate=TRUE,effects="fixed")[2,7])
+  or.lci_2[i] <- as.numeric(tidy(output_2,conf.int=TRUE,exponentiate=TRUE,effects="fixed")[2,7])
   
   # Getting OR UCI
-  or.uci2[i] <- as.numeric(tidy(output,conf.int=TRUE,exponentiate=TRUE,effects="fixed")[2,8])
+  or.uci_2[i] <- as.numeric(tidy(output_2,conf.int=TRUE,exponentiate=TRUE,effects="fixed")[2,8])
   
   toc()
   toc()
@@ -609,16 +609,16 @@ names(predPval_df_2)[1]<-paste("Pval_avrate")
 # Pads R2conditional with NA values to avoid errors in code below if whole MVA isn't performed
 length(R2conditional_2) <- nrow(covariate_grid_2)
 length(R2marginal_2) <- nrow(covariate_grid_2)
-length(or.avrate) <- nrow(covariate_grid)
-length(or.lci) <- nrow(covariate_grid)
-length(or.uci) <- nrow(covariate_grid)
+length(or.avrate_2) <- nrow(covariate_grid_2)
+length(or.lci_2) <- nrow(covariate_grid_2)
+length(or.uci_2) <- nrow(covariate_grid_2)
 
 output_table_2 <- data.frame(covariates = covariate_grid_2,
                            R2c = R2conditional_2,
                            R2m = R2marginal_2,
-                           Avrate_OR = or.avrate,
-                           Avrate_LCI = or.lci,
-                           Avrate_UCI = or.uci)
+                           Avrate_OR = or.avrate_2,
+                           Avrate_LCI = or.lci_2,
+                           Avrate_UCI = or.uci_2)
 
 output_table_2$rownumber <- row.names(output_table_2)
 
