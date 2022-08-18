@@ -282,7 +282,27 @@ rm(predictorPval, predPval_df, predictorR2, predR2_df, output_table, R2marginal,
 
 ############################################### Visualisation ##########################################
 
+################################## Overall model fits
+outtable1$R2f <- outtable1$R2c - outtable1$R2m
+outtable1$'Model Size' <- 10 - (rowSums(is.na(covariates_list)))
 
+bigplot <- outtable1[order(outtable1[,11]),]
+bigplot$n <- 1:nrow(outtable1)
+
+library(viridis)
+
+biggg <- ggplot(data = bigplot, aes(x = n, y = R2f, colour = `Model Size`)) +
+  geom_point() +
+  scale_colour_viridis(option = "B", 
+                       breaks = c(2,4,6,8,10),
+                       labels = c('2 Covariates','4','6','8','10 Covariates')) +
+  scale_y_continuous(expand = c(0.005, 0.005),
+                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
+  scale_x_continuous(expand = c(0.005, 0.005)) +
+  theme(legend.position = c(0.9,0.21)) +
+  labs(y = 'R2 of fixed effects', x = 'Number of specification')
+
+biggg
 ################################## Ben's plot 1: Average model fit per covariate
 
 ###### Subsetting outtable1 by matching rownames between covariates_list subsets and outtable1
@@ -440,7 +460,8 @@ nocatset<-subset(nocatset, (is.na(nocatset[,c(8)])))
 nocatset<-subset(nocatset, (is.na(nocatset[,c(9)])))
 
 nocatdf <- subset(outtable1, rownumber %in% nocatset$rownumber)
-nocatdf <- nocatdf[order(nocatdf[,4]),]
+nocatdf$R2f <- nocatdf$R2c - nocatdf$R2m
+nocatdf <- nocatdf[order(nocatdf[,11]),]
 nocatdf$n <- 1:nrow(nocatdf)
 
 group <- c(1,1,1,1,1,1,1,1,
@@ -469,7 +490,7 @@ nocatdf$group <- factor(nocatdf$group, levels = c("Age","Avrate/Height/Weight","
                                                   ))
 
 bigplot <- ggplot(data = nocatdf,
-                  aes(x = n, y = R2c, colour = group,
+                  aes(x = n, y = R2f, colour = group,
                       show.legend = TRUE)) +
   ylim(0, 0.5) +
   geom_point()
@@ -817,7 +838,7 @@ plot_orf <- plot_or + coord_flip()
 plot_or2f <- plot_or2 + coord_flip()
 plot_ornocatf <- plot_ornocat + coord_flip()
 
-plot_orf/plot_ornocatf/plot_or2f
+plot_orf/plot_or2f
 
 bigplot <- ggplot(data = outtable1,
                   aes(x = rownumber, y = R2c)) +
