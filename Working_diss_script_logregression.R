@@ -376,7 +376,12 @@ benplot1
 ########################################## Ideas for OR plot
 
 orplot <- as.data.frame(cbind(output_avrate$Avrate_OR, output_avrate$covariates.formula,
-                              output_avrate$Avrate_LCI, output_avrate$Avrate_UCI))
+                              output_avrate$Avrate_LCI, output_avrate$Avrate_UCI,
+                              output_avrate$Pval_first_covariate))
+
+orplot <- orplot %>% mutate(signif = case_when(V5 > 0.05 ~ 'p > .05',
+                                               V5 <= 0.05 ~ 'p <= .05'))
+
 
 orplot <- orplot[order(orplot[,1]),]
 
@@ -385,11 +390,14 @@ orplot$V3 <- as.numeric(orplot$V3)
 orplot$V4 <- as.numeric(orplot$V4)
 orplot$n <- 1:nrow(orplot)
 
+groupcols <- c('red','blue')
+
 plot_or <- ggplot(data = orplot, 
-                    aes(x = n, y = V1)) +
+                    aes(x = n, y = V1, colour = signif)) +
   ylim(0.75, 1.75) +
-  geom_errorbar(aes(ymin = V3, ymax = V4, alpha = 0.2, colour = 'red')) +
+  geom_errorbar(aes(ymin = V3, ymax = V4, alpha = 0.2)) +
   geom_point(show.legend = FALSE) +
+  scale_fill_manual(values = groupcols) +
   labs(x = '')
 
 plot_or
@@ -759,8 +767,10 @@ rm(predictorPval_2, predPval_df_2, predictorR2_2, predR2_df_2, output_table_2, R
 
 # extract OR and confidence intervals from outtable2
 orplot2 <- as.data.frame(cbind(outtable2$Avrate_OR, outtable2$Avrate_LCI, 
-                              outtable2$Avrate_UCI))
+                              outtable2$Avrate_UCI, outtable2$Pval_avrate))
 
+orplot2 <- orplot2 %>% mutate(signif = case_when(V4 > 0.05 ~ 'p > .05',
+                                               V4 <= 0.05 ~ 'p <= .05'))
 #order data by OR size
 orplot2 <- orplot2[order(orplot2[,1]),]
 
@@ -769,19 +779,23 @@ orplot2$V1 <- as.numeric(orplot2$V1)
 orplot2$V3 <- as.numeric(orplot2$V3)
 orplot2$n <- 1:nrow(orplot2)
 
+groupcols <- c('red','blue')
+
 #plot OR on y axis and grouping variable (meaningless) on x
 plot_or2 <- ggplot(data = orplot2, 
-                  aes(x = n, y = V1)) +
-  geom_errorbar(aes(ymin = V2, ymax = V3, alpha = 0.2, colour = 'red')) +
+                  aes(x = n, y = V1, colour = signif)) +
+  geom_errorbar(aes(ymin = V2, ymax = V3, alpha = 0.2)) +
   geom_point(show.legend = FALSE) +
   ylim(0.75, 1.75) +
+  scale_fill_manual(values = groupcols, drop = FALSE) +
   labs(x = '')
 
 plot_or2
 
 #combine with plot from MVA 1
 library(patchwork)
-plot_or/plot_ornocat/plot_or2
+plot_or/#plot_ornocat/
+  plot_or2
 
 #flip 90 degrees for ease of comparison with main study
 plot_orf <- plot_or + coord_flip()
