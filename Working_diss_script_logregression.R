@@ -286,8 +286,14 @@ rm(predictorPval, predPval_df, predictorR2, predR2_df, output_table, R2marginal,
 outtable1$R2f <- outtable1$R2c - outtable1$R2m
 outtable1$'Model Size' <- 10 - (rowSums(is.na(covariates_list)))
 
+#order by R2f and assign arbitrary identifier variable
 bigplot <- outtable1[order(outtable1[,11]),]
 bigplot$n <- 1:nrow(outtable1)
+
+#avrate_set<-subset(covariates_list, (!is.na(covariates_list[,1])))
+#bigplot_avrate <- subset(bigplot, rownumber %in% avrate_set$rownumber)
+#bigplot_avrate <- subset(bigplot_avrate, bigplot_avrate$modsize <= 3)
+#avrate_mods <- unlist(bigplot_avrate$n)
 
 library(viridis)
 
@@ -298,11 +304,16 @@ biggg <- ggplot(data = bigplot, aes(x = n, y = R2f, colour = `Model Size`)) +
                        labels = c('2 Covariates','4','6','8','10 Covariates')) +
   scale_y_continuous(expand = c(0.005, 0.005),
                      breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
+  #geom_vline(xintercept = avrate_mods, colour = 'red', alpha=0.2) +
   scale_x_continuous(expand = c(0.005, 0.005)) +
   theme(legend.position = c(0.9,0.21)) +
   labs(y = 'R2 of fixed effects', x = 'Number of specification')
 
 biggg
+
+ggsave('MVA1_R2f_plot.pdf', path = here::here('Figures'))
+
+
 ################################## Ben's plot 1: Average model fit per covariate
 
 ###### Subsetting outtable1 by matching rownames between covariates_list subsets and outtable1
@@ -350,10 +361,10 @@ output_victories <- subset(outtable1, rownumber %in% victories_set$rownumber)
 ###################################### Ben's Plot 1: Categorical variables included
 
 #create one dataframe of the filtered values to build the plot from
-benplot1_df <- cbind(output_avrate$R2c, output_position$R2c, output_yellowCards$R2c, output_height$R2c,
-                     output_weight$R2c, output_club$R2c, output_age$R2c,
-                     output_meanIAT$R2c, output_refCountry$R2c,
-                     output_victories$R2c)
+benplot1_df <- cbind(output_avrate$R2f, output_position$R2f, output_yellowCards$R2f, output_height$R2f,
+                     output_weight$R2f, output_club$R2f, output_age$R2f,
+                     output_meanIAT$R2f, output_refCountry$R2f,
+                     output_victories$R2f)
 
 benplot1_df <- as.data.frame(benplot1_df)
 
@@ -370,24 +381,34 @@ benplot1_df <- benplot1_df %>%
 
 #create plot
 require(ggplot2)
-benplot1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value)) + 
+benplot1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value, fill = name),
+                   show.legend = FALSE) + 
   geom_violin(scale = 'area', 
-              width = 1.6,
-              adjust = 0.1) +
-  theme_bw()
+              width = 1.3,
+              adjust = 0.5,
+              bw = 0.0075,
+              show.legend = FALSE) +
+  labs(y = 'Fixed effects R2 estimates for models',
+       x = 'Grouping covariate') 
 
-benplot1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value, colour = name)) +
+benplot1
+  
+ggsave('Av_covariate_R2f_violinplot.pdf', path = (here::here('Figures')))
+
+benplot1.1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value, colour = name)) +
   geom_dotplot(binaxis = "y", 
                binpositions = 'bygroup', 
                stackdir ="center",
                stackratio = 0.1,
-               dotsize = 0.5,
+               dotsize = 0.2,
                binwidth = 1/100,
                show.legend = FALSE) +
-  labs(y = 'Overall model R2', x = 'Common model covariate') +
+  labs(y = 'Overall model fixed effects', x = 'Common model covariate') +
   theme_bw()
   
-benplot1
+benplot1.1
+
+ggsave('Av_covariate_R2f_dotplot.pdf', path = (here::here('Figures')))
 
 ########################################## End of Ben's plot 1: Categorical variables 
 
@@ -791,6 +812,47 @@ rm(predictorPval_2, predPval_df_2, predictorR2_2, predR2_df_2, output_table_2, R
 
 ######################################### Creating plot of results #####################################
 
+####################################### Creating overall fixed effects plot
+
+outtable2$R2f <- outtable2$R2c - outtable2$R2m
+
+# create model size variable by subtracting no. NA values in Cov list from total number possible
+outtable2$'Model Size' <- 8 - (rowSums(is.na(covariates_list_2)))
+
+#order by R2f and assign arbitrary identifier variable
+bigplot2 <- outtable2[order(outtable2[,10]),]
+bigplot2$n <- 1:nrow(outtable2)
+
+#avrate_set<-subset(covariates_list, (!is.na(covariates_list[,1])))
+#bigplot_avrate <- subset(bigplot, rownumber %in% avrate_set$rownumber)
+#bigplot_avrate <- subset(bigplot_avrate, bigplot_avrate$modsize <= 3)
+#avrate_mods <- unlist(bigplot_avrate$n)
+
+library(viridis)
+
+biggg2 <- ggplot(data = bigplot2, aes(x = n, y = R2f, colour = `Model Size`)) +
+  geom_point() +
+  scale_colour_viridis(option = "B", 
+                       breaks = c(2,4,6,8),
+                       labels = c('2 Covariates','4','6','8 Covariates')) +
+  scale_y_continuous(expand = c(0.005, 0.005),
+                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
+  scale_x_continuous(expand = c(0.005, 0.005)) +
+  theme(legend.position = c(0.9,0.21)) +
+  labs(y = 'R2 of fixed effects', x = 'Number of specification')
+
+biggg2
+
+ggsave('MVA2_R2f_plot.pdf', path = here::here('Figures'))
+
+library(patchwork)
+
+combo_biggg <- biggg/biggg2
+combo_biggg
+
+ggsave('MVA_R2f_combo_plot.pdf', path = here::here('Figures'))
+
+
 ########################################## Ideas for OR plot 2
 
 # extract OR and confidence intervals from outtable2
@@ -831,7 +893,7 @@ combo_orplot <- plot_or/plot_or2
 
 combo_orplot
 
-ggsave(here('Figures'), combo_orplot, filename = 'Composite_OR_plot', device = 'png')
+ggsave('Composite_OR_plot.pdf', path = here::here('Figures'))
 
 #flip 90 degrees for ease of comparison with main study
 plot_orf <- plot_or + coord_flip()
