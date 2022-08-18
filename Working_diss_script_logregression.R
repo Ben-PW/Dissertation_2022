@@ -390,15 +390,22 @@ orplot$V3 <- as.numeric(orplot$V3)
 orplot$V4 <- as.numeric(orplot$V4)
 orplot$n <- 1:nrow(orplot)
 
-groupcols <- c('red','blue')
+
 
 plot_or <- ggplot(data = orplot, 
-                    aes(x = n, y = V1, colour = signif)) +
+                    aes(x = n, y = V1, col = signif)) +
   ylim(0.75, 1.75) +
-  geom_errorbar(aes(ymin = V3, ymax = V4, alpha = 0.2)) +
-  geom_point(show.legend = FALSE) +
-  scale_fill_manual(values = groupcols) +
-  labs(x = '')
+  geom_errorbar(aes(ymin = V3, ymax = V4),
+                alpha = .2,
+                show.legend = FALSE) +
+  geom_point(show.legend = TRUE) +
+  geom_hline(yintercept = 1.00, linetype = 'dashed', colour = 'black') +
+  scale_colour_manual(name = "Legend",
+                      values = c("p > .05"="red", 
+                                 "p <= .05" = "blue")) +
+  labs(x = 'Number of specification',
+       y = 'Odds ratio: skin tone ~ red cards only ') +
+  theme_minimal()
 
 plot_or
 
@@ -779,23 +786,31 @@ orplot2$V1 <- as.numeric(orplot2$V1)
 orplot2$V3 <- as.numeric(orplot2$V3)
 orplot2$n <- 1:nrow(orplot2)
 
-groupcols <- c('red','blue')
-
 #plot OR on y axis and grouping variable (meaningless) on x
-plot_or2 <- ggplot(data = orplot2, 
-                  aes(x = n, y = V1, colour = signif)) +
-  geom_errorbar(aes(ymin = V2, ymax = V3, alpha = 0.2)) +
-  geom_point(show.legend = FALSE) +
+plot_or2 <- ggplot(data = orplot2, aes(x = n, y = V1, col = signif)) +
   ylim(0.75, 1.75) +
-  scale_fill_manual(values = groupcols, drop = FALSE) +
-  labs(x = '')
+  geom_errorbar(aes(ymin = V2, ymax = V3),
+                alpha = 0.2,
+                show.legend = FALSE) +
+  geom_point(show.legend = TRUE) +
+  geom_hline(yintercept = 1.00, linetype = 'dashed', colour = 'black') +
+  scale_colour_manual(name = "Legend",
+                      values = c("p > .05"="red", 
+                                 "p <= .05" = "blue")) +
+  labs(y = 'Odds ratio: skin tone ~ any card type',
+       x = 'Number of specifications') +
+  theme_minimal()
 
+plot_or
 plot_or2
 
 #combine with plot from MVA 1
 library(patchwork)
-plot_or/#plot_ornocat/
-  plot_or2
+combo_orplot <- plot_or/plot_or2
+
+combo_orplot
+
+ggsave(here('Figures'), combo_orplot, filename = 'Composite_OR_plot', device = 'png')
 
 #flip 90 degrees for ease of comparison with main study
 plot_orf <- plot_or + coord_flip()
