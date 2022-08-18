@@ -327,6 +327,8 @@ output_refCountry <- subset(outtable1, rownumber %in% refCountry_set$rownumber)
 victories_set<-subset(covariates_list, (!is.na(covariates_list[,10])))
 output_victories <- subset(outtable1, rownumber %in% victories_set$rownumber)
 
+###################################### Ben's Plot 1: Categorical variables included
+
 #create one dataframe of the filtered values to build the plot from
 benplot1_df <- cbind(output_avrate$R2c, output_position$R2c, output_yellowCards$R2c, output_height$R2c,
                      output_weight$R2c, output_club$R2c, output_age$R2c,
@@ -367,7 +369,9 @@ benplot1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value, colour =
   
 benplot1
 
-########################################## End of Ben's plot: 1
+########################################## End of Ben's plot 1: Categorical variables 
+
+########################################## Ben's plot 2: Non cat variables
 
 ########################################## Ideas for OR plot
 
@@ -383,17 +387,35 @@ orplot$n <- 1:nrow(orplot)
 
 plot_or <- ggplot(data = orplot, 
                     aes(x = n, y = V1)) +
-  scale_y_continuous() +
+  ylim(0.75, 1.75) +
   geom_errorbar(aes(ymin = V3, ymax = V4, alpha = 0.2, colour = 'red')) +
   geom_point(show.legend = FALSE) +
   labs(x = '')
 
 plot_or
 
-bigplot <- ggplot(data = outtable1,
-                  aes(x = rownumber, y = R2c)) +
-  geom_point()
-bigplot
+#################### Create OR plot without categorical variables
+nocatset <- subset(covariates_list, (is.na(covariates_list[,c(2)])))
+nocatset <- subset(nocatset, (is.na(nocatset[,c(6)])))
+nocatset <- subset(nocatset, (is.na(nocatset[,c(8)])))
+nocatset <- subset(nocatset, (is.na(nocatset[,c(9)])))
+nocatset <- subset(nocatset,(!is.na(nocatset[,c(1)])))
+
+ornocatdf <- subset(outtable1, rownumber %in% nocatset$rownumber)
+
+ornocatdf <- ornocatdf[order(ornocatdf[,6]),]
+ornocatdf$n <- 1:nrow(ornocatdf)
+
+plot_ornocat <- ggplot(data = ornocatdf, 
+                              aes(x = n, y = Avrate_OR)) +
+  ylim(0.75, 1.75) +
+  geom_errorbar(aes(ymin = Avrate_LCI, 
+                    ymax = Avrate_UCI, alpha = 0.2, colour = 'red')) +
+  geom_point(show.legend = FALSE) +
+  labs(x = '')
+
+plot_ornocat
+
 ######################################### End of OR plot ideas
 
 ############################################## Potential alternative final plot
@@ -434,7 +456,7 @@ nocatdf$group <- factor(nocatdf$group, levels = c("Age","Avrate/Height/Weight","
 bigplot <- ggplot(data = nocatdf,
                   aes(x = n, y = R2c, colour = group,
                       show.legend = TRUE)) +
-  scale_y_continuous()
+  ylim(0, 0.5) +
   geom_point()
 bigplot
 
@@ -726,11 +748,54 @@ output_table_2$formula <- paste("avrate", output_table_2$formula, sep="+")
 outtable2 <- output_table_2[order(output_table_2$rownumber),]
 row.names(outtable2) <- 1:nrow(outtable2)
 
+# add odds ratio ca
+
 # Tidy up
 rm(predictorPval_2, predPval_df_2, predictorR2_2, predR2_df_2, output_table_2, R2marginal_2, output_2)
 
 ######################################### Creating plot of results #####################################
 
+########################################## Ideas for OR plot 2
+
+# extract OR and confidence intervals from outtable2
+orplot2 <- as.data.frame(cbind(outtable2$Avrate_OR, outtable2$Avrate_LCI, 
+                              outtable2$Avrate_UCI))
+
+#order data by OR size
+orplot2 <- orplot2[order(orplot2[,1]),]
+
+#recode all as numeric and add grouping variable
+orplot2$V1 <- as.numeric(orplot2$V1)
+orplot2$V3 <- as.numeric(orplot2$V3)
+orplot2$n <- 1:nrow(orplot2)
+
+#plot OR on y axis and grouping variable (meaningless) on x
+plot_or2 <- ggplot(data = orplot2, 
+                  aes(x = n, y = V1)) +
+  geom_errorbar(aes(ymin = V2, ymax = V3, alpha = 0.2, colour = 'red')) +
+  geom_point(show.legend = FALSE) +
+  ylim(0.75, 1.75) +
+  labs(x = '')
+
+plot_or2
+
+#combine with plot from MVA 1
+library(patchwork)
+plot_or/plot_ornocat/plot_or2
+
+#flip 90 degrees for ease of comparison with main study
+plot_orf <- plot_or + coord_flip()
+plot_or2f <- plot_or2 + coord_flip()
+plot_ornocatf <- plot_ornocat + coord_flip()
+
+plot_orf/plot_ornocatf/plot_or2f
+
+bigplot <- ggplot(data = outtable1,
+                  aes(x = rownumber, y = R2c)) +
+  geom_point()
+bigplot
+######################################### End of OR plot ideas
+ 
 plot_2 <- cbind(covariate_grid_2, R2conditional_2) 
 
 # Order results of plot by R2 value
