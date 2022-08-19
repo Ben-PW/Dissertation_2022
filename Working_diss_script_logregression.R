@@ -403,13 +403,17 @@ biggg_small_nocatplot <- ggplot(data = bigplot_small_nocat, aes(x = n, y = R2f, 
   geom_point() +
   scale_colour_viridis(option = "D", 
                        breaks = c(1,3),
-                       labels = c('1 Covariate','3 Covariates')) +
+                       labels = c('1','3')) +
   scale_y_continuous(expand = c(0.005, 0.005),
                      breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
   #geom_vline(xintercept = avrate_mods, colour = 'red', alpha=0.2) +
   scale_x_continuous(expand = c(0.005, 0.005)) +
-  theme(legend.position = c(0.9,0.21)) +
-  labs(y = 'R2 of small, noCat_set model avrate fixed effects', x = 'Number of specification') 
+  theme(legend.position = c(0.85,0.3),
+        legend.key.height = unit(0.3, 'cm'),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) +
+  labs(y = 'Fixed effects estimates') 
 
 biggg_small_nocatplot
 
@@ -420,18 +424,23 @@ ggsave('MVA1_R2f_avrate_smallmods_NOCAT_plot.pdf', path = here::here('Figures'))
 dashboard <- ggplot(data = bigplot_small_nocat,
                          aes(x = n, y = covariates.formula)) +
   geom_point(shape = 16, size = 1.5) +
-  labs(x = 'specification number') +
+  labs(x = 'Model number') +
   scale_x_continuous(expand = c(0.005, 0.005)) +
   theme_minimal() +
+  scale_y_discrete(guide = guide_axis(n.dodge = 1)) +
   theme(legend.position = "none",
         strip.text.x = element_blank(),
         strip.text.y = element_blank(),
-        strip.background = element_blank())
+        strip.background = element_blank(),
+        axis.title.y = element_blank())
 
 library(patchwork)
 
 dashboard
+biggg_small_nocatplot / dashboard
 dashboard_plot1 <- biggg_small_nocatplot / dashboard
+
+ggsave('MVA1_dashboard_plot.pdf', path = here::here('Figures'))
 ################################## Ben's plot 1: Average model fit per covariate
 
 
@@ -521,9 +530,8 @@ plot_or <- ggplot(data = orplot,
   scale_colour_manual(name = "Legend",
                       values = c("p > .05"="red", 
                                  "p <= .05" = "blue")) +
-  labs(x = 'Number of specification',
-       y = 'Odds ratio: skin tone ~ red cards only ') +
-  theme_minimal()
+  labs(y = 'OR: skin tone ~ red cards') +
+  theme(axis.title.x = element_blank()) 
 
 plot_or
 
@@ -950,9 +958,8 @@ plot_or2 <- ggplot(data = orplot2, aes(x = n, y = V1, col = signif)) +
   scale_colour_manual(name = "Legend",
                       values = c("p > .05"="red", 
                                  "p <= .05" = "blue")) +
-  labs(y = 'Odds ratio: skin tone ~ any card type',
-       x = 'Number of specifications') +
-  theme_minimal()
+  labs(y = 'OR: skin tone ~ red + yellow cards',
+       x = 'Model number')
 
 plot_or
 plot_or2
