@@ -279,43 +279,6 @@ row.names(outtable1) <- 1:nrow(outtable1)
 # Tidy up
 rm(predictorPval, predPval_df, predictorR2, predR2_df, output_table, R2marginal, or.avrate, or.lci, or.uci)
 
-
-############################################### Visualisation ##########################################
-
-################################## Overall model fits
-outtable1$R2f <- outtable1$R2c - outtable1$R2m
-outtable1$'Model Size' <- 10 - (rowSums(is.na(covariates_list)))
-
-#order by R2f and assign arbitrary identifier variable
-bigplot <- outtable1[order(outtable1[,11]),]
-bigplot$n <- 1:nrow(outtable1)
-
-#avrate_set<-subset(covariates_list, (!is.na(covariates_list[,1])))
-#bigplot_avrate <- subset(bigplot, rownumber %in% avrate_set$rownumber)
-#bigplot_avrate <- subset(bigplot_avrate, bigplot_avrate$modsize <= 3)
-#avrate_mods <- unlist(bigplot_avrate$n)
-
-library(viridis)
-
-biggg <- ggplot(data = bigplot, aes(x = n, y = R2f, colour = `Model Size`)) +
-  geom_point() +
-  scale_colour_viridis(option = "B", 
-                       breaks = c(2,4,6,8,10),
-                       labels = c('2 Covariates','4','6','8','10 Covariates')) +
-  scale_y_continuous(expand = c(0.005, 0.005),
-                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
-  #geom_vline(xintercept = avrate_mods, colour = 'red', alpha=0.2) +
-  scale_x_continuous(expand = c(0.005, 0.005)) +
-  theme(legend.position = c(0.9,0.21)) +
-  labs(y = 'R2 of fixed effects', x = 'Number of specification')
-
-biggg
-
-ggsave('MVA1_R2f_plot.pdf', path = here::here('Figures'))
-
-
-################################## Ben's plot 1: Average model fit per covariate
-
 ###### Subsetting outtable1 by matching rownames between covariates_list subsets and outtable1
 
 #avrate
@@ -336,27 +299,141 @@ output_weight <- subset(outtable1, rownumber %in% height_set$rownumber)
 #club
 club_set<-subset(covariates_list, (!is.na(covariates_list[,6])))
 output_club <- subset(outtable1, rownumber %in% club_set$rownumber)
-#goals
-#goals_set<-subset(covariates_list, (!is.na(covariates_list[,7])))
-#output_goals <- subset(outtable1, rownumber %in% goals_set$rownumber)
 #age
 age_set<-subset(covariates_list, (!is.na(covariates_list[,7])))
 output_age <- subset(outtable1, rownumber %in% age_set$rownumber)
 #meanIAT
 meanIAT_set<-subset(covariates_list, (!is.na(covariates_list[,8])))
 output_meanIAT <- subset(outtable1, rownumber %in% meanIAT_set$rownumber)
-#meanEXP
-#meanEXP_set<-subset(covariates_list, (!is.na(covariates_list[,8])))
-#output_meanEXP <- subset(outtable1, rownumber %in% meanEXP_set$rownumber)
-#games
-#games_set<-subset(covariates_list, (!is.na(covariates_list[,11])))
-#output_games <- subset(outtable1, rownumber %in% games_set$rownumber)
 #refCountry
 refCountry_set<-subset(covariates_list, (!is.na(covariates_list[,9])))
 output_refCountry <- subset(outtable1, rownumber %in% refCountry_set$rownumber)
 #victories
 victories_set<-subset(covariates_list, (!is.na(covariates_list[,10])))
 output_victories <- subset(outtable1, rownumber %in% victories_set$rownumber)
+
+#creating subset without large categorical variables
+nocatset <- subset(covariates_list, (is.na(covariates_list[,c(6)])))
+nocatset <- subset(nocatset, (is.na(nocatset[,c(8)])))
+nocatset <- subset(nocatset, (is.na(nocatset[,c(9)])))
+
+nocatdf <- subset(outtable1, rownumber %in% nocatset$rownumber)
+rm(nocatset)
+############################################### Visualisation ##########################################
+
+################################## Overall model fits
+outtable1$R2f <- outtable1$R2c - outtable1$R2m
+outtable1$'Model Size' <- 10 - (rowSums(is.na(covariates_list)))
+
+#order by R2f and assign arbitrary identifier variable
+bigplot <- outtable1[order(outtable1[,11]),]
+bigplot$n <- 1:nrow(outtable1)
+
+#subset bigplot by rownumbers of any model which included avrate
+avrate_set<-subset(covariates_list, (!is.na(covariates_list[,1])))
+bigplot_avrate <- subset(bigplot, rownumber %in% avrate_set$rownumber)
+
+library(viridis)
+
+################### plotting the R2f of ALL models from MVA1
+
+biggg <- ggplot(data = bigplot, aes(x = n, y = R2f, colour = `Model Size`)) +
+  geom_point() +
+  scale_colour_viridis(option = "B", 
+                       breaks = c(2,4,6,8,10),
+                       labels = c('2 Covariates','4','6','8','10 Covariates')) +
+  scale_y_continuous(expand = c(0.005, 0.005),
+                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
+  #geom_vline(xintercept = avrate_mods, colour = 'red', alpha=0.2) +
+  scale_x_continuous(expand = c(0.005, 0.005)) +
+  theme(legend.position = c(0.9,0.21)) +
+  labs(y = 'R2 of fixed effects', x = 'Number of specification')
+
+biggg
+
+ggsave('MVA1_R2f_plot.pdf', path = here::here('Figures'))
+
+################### plotting the R2f of ONLY skin tone related analyses, 
+#these are relevant to research question as we want to see analyses where variance of avrate is reduced
+
+biggg_avrate <- ggplot(data = bigplot_avrate, aes(x = n, y = R2f, colour = `Model Size`)) +
+  geom_point() +
+  scale_colour_viridis(option = "B", 
+                       breaks = c(2,4,6,8,10),
+                       labels = c('2 Covariates','4','6','8','10 Covariates')) +
+  scale_y_continuous(expand = c(0.005, 0.005),
+                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
+  #geom_vline(xintercept = avrate_mods, colour = 'red', alpha=0.2) +
+  scale_x_continuous(expand = c(0.005, 0.005)) +
+  theme(legend.position = c(0.9,0.21)) +
+  labs(y = 'R2 of avrate related fixed effects', x = 'Number of specification')
+
+biggg_avrate
+
+ggsave('MVA1_R2f_avrateONLY_plot.pdf', path = here::here('Figures'))
+
+###################### plotting the R2f of ONLY SMALL MODEL skin tone related analyses
+
+bigplot_avrate_small <- subset(bigplot_avrate, bigplot_avrate$`Model Size` <= 3)
+bigplot_avrate_small$n <- 1:nrow(bigplot_avrate_small)
+#avrate_mods <- unlist(bigplot_avrate$n)
+
+biggg_avrate_smallplot <- ggplot(data = bigplot_avrate_small, aes(x = n, y = R2f, colour = `Model Size`)) +
+  geom_point() +
+  scale_colour_viridis(option = "D", 
+                       breaks = c(1,3),
+                       labels = c('1 Covariate','3 Covariates')) +
+  scale_y_continuous(expand = c(0.005, 0.005),
+                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
+  #geom_vline(xintercept = avrate_mods, colour = 'red', alpha=0.2) +
+  scale_x_continuous(expand = c(0.005, 0.005)) +
+  theme(legend.position = c(0.9,0.21)) +
+  labs(y = 'R2 of small model avrate fixed effects', x = 'Number of specification') 
+
+biggg_avrate_smallplot
+
+ggsave('MVA1_R2f_avrate_SMALLMODELSONLY_plot.pdf', path = here::here('Figures'))
+
+##################### plotting  R2f of small model skin tone analyses without problematic variables
+
+bigplot_small_nocat <- subset(bigplot_avrate_small, rownumber %in% nocatdf$rownumber)
+bigplot_small_nocat$n <- 1:nrow(bigplot_small_nocat)
+
+biggg_small_nocatplot <- ggplot(data = bigplot_small_nocat, aes(x = n, y = R2f, colour = `Model Size`)) +
+  geom_point() +
+  scale_colour_viridis(option = "D", 
+                       breaks = c(1,3),
+                       labels = c('1 Covariate','3 Covariates')) +
+  scale_y_continuous(expand = c(0.005, 0.005),
+                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
+  #geom_vline(xintercept = avrate_mods, colour = 'red', alpha=0.2) +
+  scale_x_continuous(expand = c(0.005, 0.005)) +
+  theme(legend.position = c(0.9,0.21)) +
+  labs(y = 'R2 of small, noCat_set model avrate fixed effects', x = 'Number of specification') 
+
+biggg_small_nocatplot
+
+ggsave('MVA1_R2f_avrate_smallmods_NOCAT_plot.pdf', path = here::here('Figures'))
+
+# create dashboard for biggg_small_nocatplot
+
+dashboard <- ggplot(data = bigplot_small_nocat,
+                         aes(x = n, y = covariates.formula)) +
+  geom_point(shape = 16, size = 1.5) +
+  labs(x = 'specification number') +
+  scale_x_continuous(expand = c(0.005, 0.005)) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        strip.text.x = element_blank(),
+        strip.text.y = element_blank(),
+        strip.background = element_blank())
+
+library(patchwork)
+
+dashboard
+dashboard_plot1 <- biggg_small_nocatplot / dashboard
+################################## Ben's plot 1: Average model fit per covariate
+
 
 ###################################### Ben's Plot 1: Categorical variables included
 
@@ -451,13 +528,6 @@ plot_or <- ggplot(data = orplot,
 plot_or
 
 #################### Create OR plot without categorical variables
-nocatset <- subset(covariates_list, (is.na(covariates_list[,c(2)])))
-nocatset <- subset(nocatset, (is.na(nocatset[,c(6)])))
-nocatset <- subset(nocatset, (is.na(nocatset[,c(8)])))
-nocatset <- subset(nocatset, (is.na(nocatset[,c(9)])))
-nocatset <- subset(nocatset,(!is.na(nocatset[,c(1)])))
-
-ornocatdf <- subset(outtable1, rownumber %in% nocatset$rownumber)
 
 ornocatdf <- ornocatdf[order(ornocatdf[,6]),]
 ornocatdf$n <- 1:nrow(ornocatdf)
@@ -555,7 +625,7 @@ dashboard$Bigdecision <- factor(dashboard$Bigdecision,
 
 dashboardfinal <- ggplot(data = dashboard,
                          aes(x = n, y = Decision)) +
-  facet_grid(Bigdecision ~ ., scales = "free", space = "free", drop = ) +
+  facet_grid(scales = "free", space = "free", drop = ) +
   geom_point(shape = 108, size = 1) +
   labs(x = 'specification number') +
   theme_minimal() +
