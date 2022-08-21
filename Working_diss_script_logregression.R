@@ -371,7 +371,7 @@ biggg_avrate <- ggplot(data = bigplot_avrate, aes(x = n, y = R2m, colour = `Mode
 
 biggg_avrate
 
-ggsave('MVA1_R2f_avrateONLY_plot.pdf', path = here::here('Figures'))
+ggsave('MVA1_R2f_avrateONLY_FINAL.pdf', path = here::here('Figures'))
 
 ################ R2f of skin tone related analyses without problematic variables
 bigplot_avrate_nocat <- subset(bigplot_avrate, rownumber %in% nocatdf$rownumber)
@@ -390,6 +390,8 @@ biggg_avrate_nocatplot <- ggplot(data = bigplot_avrate_nocat, aes(x = n, y = R2m
   labs(y = 'R2 of avrate related fixed effects', x = 'Number of specification')
 
 biggg_avrate_nocatplot
+
+ggsave('MVA1_R2f_bad_variables_out_FINAL.pdf', path = here::here('Figures'))
 
 ###################### plotting the R2f of ONLY SMALL MODEL skin tone related analyses
 
@@ -466,10 +468,10 @@ ggsave('MVA1_dashboard_plot.pdf', path = here::here('Figures'))
 ###################################### Ben's Plot 1: Categorical variables included
 
 #create one dataframe of the filtered values to build the plot from
-benplot1_df <- cbind(output_avrate$R2f, output_position$R2f, output_yellowCards$R2f, output_height$R2f,
-                     output_weight$R2f, output_club$R2f, output_age$R2f,
-                     output_meanIAT$R2f, output_refCountry$R2f,
-                     output_victories$R2f)
+benplot1_df <- cbind(output_avrate$R2m, output_position$R2m, output_yellowCards$R2m, output_height$R2m,
+                     output_weight$R2m, output_club$R2m, output_age$R2m,
+                     output_meanIAT$R2m, output_refCountry$R2m,
+                     output_victories$R2m)
 
 benplot1_df <- as.data.frame(benplot1_df)
 
@@ -493,12 +495,13 @@ benplot1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value, fill = n
               adjust = 0.5,
               bw = 0.0075,
               show.legend = FALSE) +
+  theme(axis.text.x = element_text(angle = 90)) +
   labs(y = 'Fixed effects R2 estimates for models',
        x = 'Grouping covariate') 
 
 benplot1
   
-ggsave('Av_covariate_R2f_violinplot.pdf', path = (here::here('Figures')))
+ggsave('Av_covariate_R2f_violinplot_FINAL.pdf', path = (here::here('Figures')))
 
 benplot1.1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value, colour = name)) +
   geom_dotplot(binaxis = "y", 
@@ -518,6 +521,50 @@ ggsave('Av_covariate_R2f_dotplot.pdf', path = (here::here('Figures')))
 ########################################## End of Ben's plot 1: Categorical variables 
 
 ########################################## Ben's plot 2: Non cat variables
+catrows <- as.data.frame(cbind(refCountry_set$rownumber, club_set$rownumber))
+catrows <- stack(catrows)
+
+# subset outputs for rows that aren't shared with analyses including refCountry or club
+nocat_output_avrate <- as.data.frame(subset(output_avrate, !(rownumber %in% catrows$value)))
+nocat_output_position <- as.data.frame(subset(output_position, !(rownumber %in% catrows$value)))
+nocat_output_yellowCards <- as.data.frame(subset(output_yellowCards, !(rownumber %in% catrows$value)))
+nocat_output_height <- as.data.frame(subset(output_height, !(rownumber %in% catrows$value)))
+nocat_output_age <- as.data.frame(subset(output_age, !(rownumber %in% catrows$value)))
+nocat_output_weight <- as.data.frame(subset(output_weight, !(rownumber %in% catrows$value)))
+nocat_output_meanIAT <- as.data.frame(subset(output_meanIAT, !(rownumber %in% catrows$value)))
+nocat_output_victories <- as.data.frame(subset(output_victories, !(rownumber %in% catrows$value)))
+
+#combine into plot
+benplot1_nocat_df <- as.data.frame(cbind(nocat_output_avrate$R2m, nocat_output_position$R2m, 
+                           nocat_output_yellowCards$R2m, nocat_output_height$R2m,
+                           nocat_output_weight$R2m, nocat_output_age$R2m,
+                           nocat_output_meanIAT$R2m, nocat_output_victories$R2m))
+
+colnames(benplot1_nocat_df)[c(1,2,3,4,5,6,7,8)] <- c('Skin_Tone','Position','Yellow_Cards',
+                                                    'Height','Weight','Age','Mean_IAT',
+                                                    'Victories')
+#same as last plot
+benplot1_nocat_df <- benplot1_nocat_df %>%
+  pivot_longer(everything())
+
+#create this absolute banger of a plot
+require(ggplot2)
+benplot1_nocat <- ggplot(data=benplot1_nocat_df, mapping = aes(x = name, y = value, fill = name),
+                   show.legend = FALSE) + 
+  geom_violin(scale = 'area', 
+              width = 1.3,
+              adjust = 0.5,
+              bw = 0.0075,
+              show.legend = FALSE) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(y = 'Fixed effects R2 estimates for models',
+       x = 'Grouping covariate') 
+
+#cast your eyes upon its' glory
+benplot1_nocat
+
+#save it for posterity
+ggsave('benplot1_bad_variables_out_FINAL.pdf', path = here::here('Figures'))
 
 ########################################## Ideas for OR plot
 
