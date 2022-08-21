@@ -326,7 +326,7 @@ outtable1$R2f <- outtable1$R2c - outtable1$R2m
 outtable1$'Model Size' <- 10 - (rowSums(is.na(covariates_list)))
 
 #order by R2f and assign arbitrary identifier variable
-bigplot <- outtable1[order(outtable1[,11]),]
+bigplot <- outtable1[order(outtable1[,5]),]
 bigplot$n <- 1:nrow(outtable1)
 
 #subset bigplot by rownumbers of any model which included avrate
@@ -337,13 +337,13 @@ library(viridis)
 
 ################### plotting the R2f of ALL models from MVA1
 
-biggg <- ggplot(data = bigplot, aes(x = n, y = R2f, colour = `Model Size`)) +
+biggg <- ggplot(data = bigplot, aes(x = n, y = R2m, colour = `Model Size`)) +
   geom_point() +
   scale_colour_viridis(option = "B", 
                        breaks = c(2,4,6,8,10),
                        labels = c('2 Covariates','4','6','8','10 Covariates')) +
   scale_y_continuous(expand = c(0.005, 0.005),
-                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
+                     breaks = c(.1,.2,.3,.4,.5,.6,.7,.8,.9,1)) +
   #geom_vline(xintercept = avrate_mods, colour = 'red', alpha=0.2) +
   scale_x_continuous(expand = c(0.005, 0.005)) +
   theme(legend.position = c(0.9,0.21)) +
@@ -356,13 +356,13 @@ ggsave('MVA1_R2f_plot.pdf', path = here::here('Figures'))
 ################### plotting the R2f of ONLY skin tone related analyses, 
 #these are relevant to research question as we want to see analyses where variance of avrate is reduced
 
-biggg_avrate <- ggplot(data = bigplot_avrate, aes(x = n, y = R2f, colour = `Model Size`)) +
+biggg_avrate <- ggplot(data = bigplot_avrate, aes(x = n, y = R2m, colour = `Model Size`)) +
   geom_point() +
   scale_colour_viridis(option = "B", 
                        breaks = c(2,4,6,8,10),
                        labels = c('2 Covariates','4','6','8','10 Covariates')) +
   scale_y_continuous(expand = c(0.005, 0.005),
-                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
+                     breaks = c(.1,.2,.3,.4,.5,.6,.7,.8)) +
   #geom_vline(xintercept = avrate_mods, colour = 'red', alpha=0.2) +
   scale_x_continuous(expand = c(0.005, 0.005)) +
   theme(legend.position = c(0.9,0.21)) +
@@ -378,13 +378,13 @@ bigplot_avrate_small <- subset(bigplot_avrate, bigplot_avrate$`Model Size` <= 3)
 bigplot_avrate_small$n <- 1:nrow(bigplot_avrate_small)
 #avrate_mods <- unlist(bigplot_avrate$n)
 
-biggg_avrate_smallplot <- ggplot(data = bigplot_avrate_small, aes(x = n, y = R2f, colour = `Model Size`)) +
+biggg_avrate_smallplot <- ggplot(data = bigplot_avrate_small, aes(x = n, y = R2m, colour = `Model Size`)) +
   geom_point() +
   scale_colour_viridis(option = "D", 
                        breaks = c(1,3),
                        labels = c('1 Covariate','3 Covariates')) +
   scale_y_continuous(expand = c(0.005, 0.005),
-                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
+                     breaks = c(.1,.2,.3,.4,.5,.6,.7,.8)) +
   #geom_vline(xintercept = avrate_mods, colour = 'red', alpha=0.2) +
   scale_x_continuous(expand = c(0.005, 0.005)) +
   theme(legend.position = c(0.9,0.21)) +
