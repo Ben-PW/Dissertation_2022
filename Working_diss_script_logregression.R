@@ -314,7 +314,7 @@ output_victories <- subset(outtable1, rownumber %in% victories_set$rownumber)
 
 #creating subset without large categorical variables
 nocatset <- subset(covariates_list, (is.na(covariates_list[,c(6)])))
-nocatset <- subset(nocatset, (is.na(nocatset[,c(8)])))
+#nocatset <- subset(nocatset, (is.na(nocatset[,c(8)])))
 nocatset <- subset(nocatset, (is.na(nocatset[,c(9)])))
 
 nocatdf <- subset(outtable1, rownumber %in% nocatset$rownumber)
@@ -332,6 +332,7 @@ bigplot$n <- 1:nrow(outtable1)
 #subset bigplot by rownumbers of any model which included avrate
 avrate_set<-subset(covariates_list, (!is.na(covariates_list[,1])))
 bigplot_avrate <- subset(bigplot, rownumber %in% avrate_set$rownumber)
+bigplot_avrate$n <- 1:nrow(bigplot_avrate)
 
 library(viridis)
 
@@ -372,6 +373,24 @@ biggg_avrate
 
 ggsave('MVA1_R2f_avrateONLY_plot.pdf', path = here::here('Figures'))
 
+################ R2f of skin tone related analyses without problematic variables
+bigplot_avrate_nocat <- subset(bigplot_avrate, rownumber %in% nocatdf$rownumber)
+bigplot_avrate_nocat$n <- 1:nrow(bigplot_avrate_nocat)
+
+biggg_avrate_nocatplot <- ggplot(data = bigplot_avrate_nocat, aes(x = n, y = R2m, colour = `Model Size`)) +
+  geom_point() +
+  scale_colour_viridis(option = "B", 
+                       breaks = c(2,4,6),
+                       labels = c('2 Covariates','4','6 Covariates')) +
+  scale_y_continuous(expand = c(0.005, 0.005),
+                     breaks = c(.01,.02,.03,.04,.05,.06,.07,.08)) +
+  #geom_vline(xintercept = avrate_mods, colour = 'red', alpha=0.2) +
+  scale_x_continuous(expand = c(0.005, 0.005)) +
+  theme(legend.position = c(0.9,0.21)) +
+  labs(y = 'R2 of avrate related fixed effects', x = 'Number of specification')
+
+biggg_avrate_nocatplot
+
 ###################### plotting the R2f of ONLY SMALL MODEL skin tone related analyses
 
 bigplot_avrate_small <- subset(bigplot_avrate, bigplot_avrate$`Model Size` <= 3)
@@ -399,7 +418,7 @@ ggsave('MVA1_R2f_avrate_SMALLMODELSONLY_plot.pdf', path = here::here('Figures'))
 bigplot_small_nocat <- subset(bigplot_avrate_small, rownumber %in% nocatdf$rownumber)
 bigplot_small_nocat$n <- 1:nrow(bigplot_small_nocat)
 
-biggg_small_nocatplot <- ggplot(data = bigplot_small_nocat, aes(x = n, y = R2f, colour = `Model Size`)) +
+biggg_small_nocatplot <- ggplot(data = bigplot_small_nocat, aes(x = n, y = R2m, colour = `Model Size`)) +
   geom_point() +
   scale_colour_viridis(option = "D", 
                        breaks = c(1,3),
@@ -537,30 +556,39 @@ plot_or
 
 #################### Create OR plot without categorical variables
 
-ornocatdf <- ornocatdf[order(ornocatdf[,6]),]
+ornocatdf <- bigplot_avrate_nocat[order(bigplot_avrate_nocat[,6]),]
 ornocatdf$n <- 1:nrow(ornocatdf)
+ornocatdf <- ornocatdf %>% mutate(signif = case_when(Pval_first_covariate > 0.05 ~ 'p > .05',
+                                               Pval_first_covariate <= 0.05 ~ 'p <= .05'))
 
 plot_ornocat <- ggplot(data = ornocatdf, 
-                              aes(x = n, y = Avrate_OR)) +
+                       aes(x = n, y = Avrate_OR, col = signif)) +
   ylim(0.75, 1.75) +
-  geom_errorbar(aes(ymin = Avrate_LCI, 
-                    ymax = Avrate_UCI, alpha = 0.2, colour = 'red')) +
-  geom_point(show.legend = FALSE) +
-  labs(x = '')
+  geom_errorbar(aes(ymin = Avrate_LCI, ymax = Avrate_UCI),
+                alpha = .2,
+                show.legend = FALSE) +
+  geom_point(show.legend = TRUE) +
+  geom_hline(yintercept = 1.00, linetype = 'dashed', colour = 'black') +
+  scale_colour_manual(name = "Legend",
+                      values = c("p > .05"="red", 
+                                 "p <= .05" = "blue")) +
+  labs(y = 'OR: skin tone ~ red cards') +
+  theme(axis.title.x = element_blank()) 
 
 plot_ornocat
+
+
 
 ######################################### End of OR plot ideas
 
 ############################################## Potential alternative final plot
-nocatset<-subset(covariates_list, (is.na(covariates_list[,c(2)])))
-nocatset<-subset(nocatset, (is.na(nocatset[,c(6)])))
+nocatset<-subset(covariates_list, (is.na(covariates_list[,c(6)])))
 nocatset<-subset(nocatset, (is.na(nocatset[,c(8)])))
 nocatset<-subset(nocatset, (is.na(nocatset[,c(9)])))
 
 nocatdf <- subset(outtable1, rownumber %in% nocatset$rownumber)
 nocatdf$R2f <- nocatdf$R2c - nocatdf$R2m
-nocatdf <- nocatdf[order(nocatdf[,11]),]
+nocatdf <- nocatdf[order(nocatdf[,5]),]
 nocatdf$n <- 1:nrow(nocatdf)
 
 group <- c(1,1,1,1,1,1,1,1,
@@ -589,7 +617,8 @@ nocatdf$group <- factor(nocatdf$group, levels = c("Age","Avrate/Height/Weight","
                                                   ))
 
 bigplot <- ggplot(data = nocatdf,
-                  aes(x = n, y = R2f, colour = group,
+                  aes(x = n, y = R2m,
+                      #colour = group,
                       show.legend = TRUE)) +
   ylim(0, 0.5) +
   geom_point()
@@ -898,7 +927,7 @@ outtable2$R2f <- outtable2$R2c - outtable2$R2m
 outtable2$'Model Size' <- 8 - (rowSums(is.na(covariates_list_2)))
 
 #order by R2f and assign arbitrary identifier variable
-bigplot2 <- outtable2[order(outtable2[,10]),]
+bigplot2 <- outtable2[order(outtable2[,4]),]
 bigplot2$n <- 1:nrow(outtable2)
 
 #avrate_set<-subset(covariates_list, (!is.na(covariates_list[,1])))
@@ -908,13 +937,13 @@ bigplot2$n <- 1:nrow(outtable2)
 
 library(viridis)
 
-biggg2 <- ggplot(data = bigplot2, aes(x = n, y = R2f, colour = `Model Size`)) +
+biggg2 <- ggplot(data = bigplot2, aes(x = n, y = R2m, colour = `Model Size`)) +
   geom_point() +
   scale_colour_viridis(option = "B", 
                        breaks = c(2,4,6,8),
                        labels = c('2 Covariates','4','6','8 Covariates')) +
   scale_y_continuous(expand = c(0.005, 0.005),
-                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2)) +
+                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2,.225,.25,.275,.3)) +
   scale_x_continuous(expand = c(0.005, 0.005)) +
   theme(legend.position = c(0.9,0.21)) +
   labs(y = 'R2 of fixed effects', x = 'Number of specification')
