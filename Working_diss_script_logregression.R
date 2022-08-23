@@ -335,6 +335,7 @@ bigplot_avrate <- subset(bigplot, rownumber %in% avrate_set$rownumber)
 bigplot_avrate$n <- 1:nrow(bigplot_avrate)
 
 library(viridis)
+library(jtools)
 
 ################### plotting the R2f of ALL models from MVA1
 
@@ -348,7 +349,8 @@ biggg <- ggplot(data = bigplot, aes(x = n, y = R2m, colour = `Model Size`)) +
   #geom_vline(xintercept = avrate_mods, colour = 'red', alpha=0.2) +
   scale_x_continuous(expand = c(0.005, 0.005)) +
   theme(legend.position = c(0.9,0.21)) +
-  labs(y = 'R2 of fixed effects', x = 'Number of specification')
+  labs(y = 'R2 of fixed effects', x = 'Number of specification') +
+  theme_apa()
 
 biggg
 
@@ -488,7 +490,7 @@ benplot1_df <- benplot1_df %>%
 
 #create plot
 require(ggplot2)
-benplot1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value, fill = name),
+benplot1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value),
                    show.legend = FALSE) + 
   geom_violin(scale = 'area', 
               width = 1.3,
@@ -497,7 +499,8 @@ benplot1 <- ggplot(data=benplot1_df, mapping = aes(x = name, y = value, fill = n
               show.legend = FALSE) +
   theme(axis.text.x = element_text(angle = 90)) +
   labs(y = 'Fixed effects R2 estimates for models',
-       x = 'Grouping covariate') 
+       x = 'Grouping covariate') +
+  theme_apa()
 
 benplot1
   
@@ -540,6 +543,8 @@ benplot1_nocat_df <- as.data.frame(cbind(nocat_output_avrate$R2m, nocat_output_p
                            nocat_output_weight$R2m, nocat_output_age$R2m,
                            nocat_output_meanIAT$R2m, nocat_output_victories$R2m))
 
+rm(nocat_output_age, nocat_output_avrate )
+
 colnames(benplot1_nocat_df)[c(1,2,3,4,5,6,7,8)] <- c('Skin_Tone','Position','Yellow_Cards',
                                                     'Height','Weight','Age','Mean_IAT',
                                                     'Victories')
@@ -549,16 +554,18 @@ benplot1_nocat_df <- benplot1_nocat_df %>%
 
 #create this absolute banger of a plot
 require(ggplot2)
-benplot1_nocat <- ggplot(data=benplot1_nocat_df, mapping = aes(x = name, y = value, fill = name),
+benplot1_nocat <- ggplot(data=benplot1_nocat_df, mapping = aes(x = name, y = value),
                    show.legend = FALSE) + 
   geom_violin(scale = 'area', 
               width = 1.3,
               adjust = 0.5,
               bw = 0.0075,
               show.legend = FALSE) +
+  geom_boxplot(width = 0.2, position = position_dodge(0.75)) +
   theme(axis.text.x = element_text(angle = 90)) +
   labs(y = 'Fixed effects R2 estimates for models',
-       x = 'Grouping covariate') 
+       x = 'Grouping covariate') +
+  theme_apa()
 
 #cast your eyes upon its' glory
 benplot1_nocat
@@ -952,6 +959,9 @@ output_table_2 <- merge(output_table_2, predR2_df_2, by = "rownumber", all = TRU
 output_table_2 <- merge(output_table_2, predPval_df_2, by = "rownumber", all = TRUE)
 output_table_2$rownumber <- as.numeric(output_table_2$rownumber)
 
+# create model size variable by subtracting no. NA values in Cov list from total number possible
+outtable2$'Model Size' <- 8 - (rowSums(is.na(covariates_list_2)))
+
 # editing formula column for interpretability
 output_table_2$formula <- paste("avrate", output_table_2$formula, sep="+")
 
@@ -959,19 +969,23 @@ output_table_2$formula <- paste("avrate", output_table_2$formula, sep="+")
 outtable2 <- output_table_2[order(output_table_2$rownumber),]
 row.names(outtable2) <- 1:nrow(outtable2)
 
-# add odds ratio ca
-
 # Tidy up
 rm(predictorPval_2, predPval_df_2, predictorR2_2, predR2_df_2, output_table_2, R2marginal_2, output_2)
 
+# Create subset without problematic categorical variables
+covariates_list_2$rownumber <- 1:nrow(covariates_list_2)
+nocatset2 <- subset(covariates_list_2, (is.na(covariates_list_2[,c(4)])))
+#nocatset <- subset(nocatset, (is.na(nocatset[,c(8)])))
+nocatset2 <- subset(nocatset2, (is.na(nocatset2[,c(7)])))
+
+nocatdf2 <- subset(outtable2, rownumber %in% nocatset2$rownumber)
+rm(nocatset2)
 ######################################### Creating plot of results #####################################
 
 ####################################### Creating overall fixed effects plot
 
 outtable2$R2f <- outtable2$R2c - outtable2$R2m
 
-# create model size variable by subtracting no. NA values in Cov list from total number possible
-outtable2$'Model Size' <- 8 - (rowSums(is.na(covariates_list_2)))
 
 #order by R2f and assign arbitrary identifier variable
 bigplot2 <- outtable2[order(outtable2[,4]),]
@@ -1005,6 +1019,27 @@ combo_biggg <- biggg/biggg2
 combo_biggg
 
 ggsave('MVA_R2f_combo_plot.pdf', path = here::here('Figures'))
+
+########################## Fixed effects plot without problematic variables
+
+nocatdf2 <- nocatdf2[order(nocatdf2[,4]),]
+nocatdf2$n <- 1:nrow(nocatdf2)
+
+library(viridis)
+
+biggg_nocat <- ggplot(data = nocatdf2, aes(x = n, y = R2m, colour = `Model Size`)) +
+  geom_point() +
+  scale_colour_viridis(option = "B", 
+                       breaks = c(2,4,6,8),
+                       labels = c('2 Covariates','4','6','8 Covariates')) +
+  scale_y_continuous(expand = c(0.005, 0.005),
+                     breaks = c(.025,.05,.075,.1,.125,.15,.175,.2,.225,.25,.275,.3)) +
+  scale_x_continuous(expand = c(0.005, 0.005)) +
+  theme(legend.position = c(0.9,0.21)) +
+  labs(y = 'R2 of fixed effects', x = 'Number of specification')
+
+biggg_nocat
+
 
 
 ########################################## Ideas for OR plot 2
@@ -1061,45 +1096,3 @@ bigplot <- ggplot(data = outtable1,
 bigplot
 ######################################### End of OR plot ideas
  
-plot_2 <- cbind(covariate_grid_2, R2conditional_2) 
-
-# Order results of plot by R2 value
-plot2_2 <- plot[order(plot$R2conditional_2), ]
-rm(plot)
-
-# Creating a grouping variable (n) for each row of covariate_grid
-plot2_2$n <- 1:nrow(plot2_2)
-
-# Creating final plot
-plotfinal_2 <- ggplot(data = plot2_2, 
-                    aes(x = n, y = R2conditional_2)) +
-  geom_point() +
-  labs(x = '')
-
-# Creating dashboard to go underneath plot
-dashboard_2 <- plot2_2 %>% 
-  gather(Bigdecision, Decision, -R2conditional_2, -n) %>%
-  filter(Decision != 'NA')
-
-rm(plot2_2)
-
-# Creating levels in Bigdecision variable that correspond to data in covariate_grid rows
-
-dashboard_2$Bigdecision <- factor(dashboard$Bigdecision, 
-                                levels = names(covariate_grid_2))
-
-
-dashboardfinal_2 <- ggplot(data = dashboard_2,
-                         aes(x = n, y = Decision, colour = Bigdecision)) +
-  facet_grid(Bigdecision ~ ., scales = "free", space = "free", drop = ) +
-  geom_point(aes(colour = Bigdecision), shape = 108, size = 1) +
-  labs(x = 'specification number') +
-  theme_minimal() +
-  theme(legend.position = "none",
-        strip.text.x = element_blank(),
-        strip.text.y = element_blank(),
-        strip.background = element_blank())
-
-library(patchwork)
-plotfinal_2
-plotfinal_2 / dashboardfinal_2
